@@ -5,6 +5,8 @@ import os
 from config import HOST, PORT
 import routes
 
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
+
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
@@ -33,25 +35,24 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def do_GET(self):
-        # Serve turtle client code
-        if self.path == "/client.lua":
-            if not os.path.exists("client.lua"):
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b"file not found")
-                return
+        filename = self.path.lstrip("/")  # "client.lua"
 
-            self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
+        filepath = os.path.join(BASE_DIR, filename)
+
+        if not os.path.exists(filepath):
+            self.send_response(404)
             self.end_headers()
-
-            with open("client.lua", "rb") as f:
-                self.wfile.write(f.read())
+            self.wfile.write(b"file not found")
             return
 
-        self.send_response(404)
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
         self.end_headers()
 
+        with open(filepath, "rb") as f:
+            self.wfile.write(f.read())
+
+        return
 
 def run():
     print(f"DiggyNet running on {HOST}:{PORT}")
