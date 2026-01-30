@@ -1,6 +1,6 @@
 local config = dofile("client.lua")
 
-local SERVER = config.server_url .. "/heartbeat"
+local SERVER = "http://localhost:8000"
 local turtle_id = nil
 
 while true do
