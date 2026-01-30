@@ -21,7 +21,12 @@ local function buildHeartbeat()
 		},
 		last_command = State.last_command,
 		location = Location.get(),
-		stats = Stats.collect()
+		stats = Stats.collect(),
+		vision = {
+			front = Turtle.inspect(),    -- block info in front
+			up = Turtle.inspectUp(),     -- block info above
+			down = Turtle.inspectDown()  -- block info below
+		}
 	}
 end
 

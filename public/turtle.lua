@@ -67,4 +67,33 @@ function Turtle.fuel()
 	return turtle.getFuelLevel()
 end
 
+-- Returns true if block is present in front
+function Turtle.detect()
+	return turtle.detect()
+end
+
+function Turtle.detectUp()
+	return turtle.detectUp()
+end
+
+function Turtle.detectDown()
+	return turtle.detectDown()
+end
+
+-- Returns block info if present, else nil
+function Turtle.inspect()
+	local ok, info = turtle.inspect()
+	return ok and info or nil
+end
+
+function Turtle.inspectUp()
+	local ok, info = turtle.inspectUp()
+	return ok and info or nil
+end
+
+function Turtle.inspectDown()
+	local ok, info = turtle.inspectDown()
+	return ok and info or nil
+end
+
 return Turtle
