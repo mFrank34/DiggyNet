@@ -12,8 +12,9 @@ local function download(name)
     res.close()
 end
 
-download("boot.lua")     -- boot strap
-download("client.lua")   -- config
-download("agent.lua")    -- runtime
+download("boot.lua")        -- Boot strap
+download("client.lua")      -- Config
+download("movement.lua")    -- Movement system
+download("agent.lua")       -- Runtime
 
 shell.run("agent.lua")

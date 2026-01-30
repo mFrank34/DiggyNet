@@ -7,7 +7,6 @@ import routes
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
-
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
