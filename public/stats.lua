@@ -1,11 +1,24 @@
 local Stats = {}
 
-Stats.collect = function()
-  return {
-    fuel = turtle.getFuelLevel(),
-    slot = turtle.getSelectedSlot(),
-    label = os.getComputerLabel()
-  }
+function Stats.collect()
+	local inv = {}
+
+	for slot = 1, 16 do
+		local item = turtle.getItemDetail(slot)
+		if item then
+			table.insert(inv, {
+				slot = slot,
+				name = item.name,
+				count = item.count
+			})
+		end
+	end
+
+	return {
+		fuel = turtle.getFuelLevel(),
+		selected_slot = turtle.getSelectedSlot(),
+		inventory = inv
+	}
 end
 
 return Stats
