@@ -1,0 +1,19 @@
+local SERVER = "http://localhost:8000"
+
+local function download(name)
+    if fs.exists(name) then return end
+
+    local res = http.get(SERVER .. "/" .. name)
+    if not res then error("Failed to download " .. name) end
+
+    local f = fs.open(name, "w")
+    f.write(res.readAll())
+    f.close()
+    res.close()
+end
+
+download("boot.lua")     -- boot strap
+download("client.lua")   -- config
+download("agent.lua")    -- runtime
+
+shell.run("agent.lua")
