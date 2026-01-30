@@ -50,6 +50,19 @@ function Turtle.refuel(slot)
 	turtle.refuel()
 end
 
+-- ---- Inventory / Fuel helpers ----
+function Turtle.select(slot)
+	turtle.select(slot)
+end
+
+function Turtle.itemCount()
+	return turtle.getItemCount()
+end
+
+function Turtle.canRefuel()
+	return turtle.refuel(0)
+end
+
 function Turtle.fuel()
 	return turtle.getFuelLevel()
 end
