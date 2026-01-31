@@ -18,9 +18,12 @@ with open(CONFIG_FILE, "r") as f:
 HOST = config_data.get("HOST", "0.0.0.0")
 PORT = config_data.get("PORT", 8000)
 
+RESET_DB = config_data.get("RESET_DB", False)
+
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
 server_key = None
+
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
@@ -116,6 +119,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         with open(filepath, "rb") as f:
             self.wfile.write(f.read())
 
+
 def info():
     logger.info("================================")
     logger.info("      DiggyNet Server Booting")
@@ -129,12 +133,27 @@ def info():
     logger.info(f"{server_key}")
     logger.info("================================")
 
+
 def run():
     global server_key
+
+    if RESET_DB:
+        db_path = os.path.join(os.path.dirname(__file__), "diggynet.db")
+        if os.path.exists(db_path):
+            os.remove(db_path)
+            logger.info("Database reset enabled — old DB deleted.")
+
+    # Initialize schema
     db.init_db()
+
+    # Load server key
     server_key = db.get_server_key()
+
+    # Information around the server
     info()
-    HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
+
+    # Server Listener
+    HTTPServer((HOST, PORT), DiggyNewtHandler).serve_forever()
 
 
 if __name__ == "__main__":
