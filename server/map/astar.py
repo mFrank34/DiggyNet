@@ -1,6 +1,7 @@
 import heapq
 from shared.constants import MOVEMENT_COST, NEIGHBORS
 
+
 def astar(map_manager, start, goal):
     sx, sy, sz = start
     gx, gy, gz = goal
