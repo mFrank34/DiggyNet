@@ -1,4 +1,4 @@
-from turtles import *
+from .turtles import *
 
 counter = 1
 
