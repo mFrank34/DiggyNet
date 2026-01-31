@@ -5,6 +5,7 @@ import uuid
 import sqlite3
 import time
 import zlib
+import json
 
 import numpy as np
 from shared.constants import CHUNK_SIZE
@@ -64,7 +65,19 @@ def init_db():
                       PRIMARY KEY (cx, cz)
                   )
                   """)
-
+        # Job Table
+        c.execute("""
+                  CREATE TABLE IF NOT EXISTS jobs
+                  (
+                      id          TEXT PRIMARY KEY,
+                      type        TEXT NOT NULL,
+                      payload     TEXT NOT NULL,
+                      assigned_to TEXT,
+                      status      TEXT NOT NULL,
+                      progress    REAL,
+                      created_at  REAL NOT NULL
+                  );
+                  """)
         conn.commit()
 
 
@@ -206,3 +219,54 @@ def get_home_location(client_id):
             return None
 
         return (row["home_x"], row["home_y"], row["home_z"])
+
+
+def create_job(job_type, payload):
+    job_id = uuid.uuid4().hex
+    with get_conn() as conn:
+        conn.execute("""
+                     INSERT INTO jobs (id, type, payload, status, created_at)
+                     VALUES (?, ?, ?, ?, ?)
+                     """, (job_id, job_type, json.dumps(payload), "pending", time.time()))
+    return job_id
+
+
+def get_next_unassigned_job():
+    with get_conn() as conn:
+        cur = conn.execute("""
+                           SELECT *
+                           FROM jobs
+                           WHERE status = 'pending'
+                           ORDER BY created_at ASC
+                           LIMIT 1
+                           """)
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
+def assign_job(job_id, client_id):
+    with get_conn() as conn:
+        conn.execute("""
+                     UPDATE jobs
+                     SET assigned_to=?,
+                         status='assigned'
+                     WHERE id = ?
+                     """, (client_id, job_id))
+
+
+def update_job_progress(job_id, progress):
+    with get_conn() as conn:
+        conn.execute("""
+                     UPDATE jobs
+                     SET progress=?
+                     WHERE id = ?
+                     """, (progress, job_id))
+
+
+def complete_job(job_id):
+    with get_conn() as conn:
+        conn.execute("""
+                     UPDATE jobs
+                     SET status='complete'
+                     WHERE id = ?
+                     """, (job_id,))
