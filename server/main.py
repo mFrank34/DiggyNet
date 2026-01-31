@@ -8,6 +8,7 @@ import mimetypes
 
 from server import db
 from server import routes
+from tests.dance import create_dance_job
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -157,6 +158,7 @@ def run():
 
     # Initialize schema
     db.init_db()
+    create_dance_job()
 
     # Load server key
     server_key = db.get_server_key()
