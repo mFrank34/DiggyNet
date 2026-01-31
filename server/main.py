@@ -18,7 +18,6 @@ with open(CONFIG_FILE, "r") as f:
 HOST = config_data.get("HOST", "0.0.0.0")
 PORT = config_data.get("PORT", 8000)
 
-server_key = db.get_server_key()
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
 
@@ -119,6 +118,8 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
 def run():
     db.init_db()
+    server_key = db.get_server_key()
+
     logger.info("================================")
     logger.info("      DiggyNet Server Booting")
     logger.info("================================")
@@ -130,7 +131,6 @@ def run():
     logger.info(f"Server key:")
     logger.info(f"{server_key}")
     logger.info("================================")
-
 
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
