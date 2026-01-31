@@ -5,12 +5,20 @@ import os
 import db
 import routes
 
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Load config
+CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+with open(CONFIG_FILE, "r") as f:
+    config_data = json.load(f)
+
+HOST = config_data.get("HOST", "0.0.0.0")
+PORT = config_data.get("PORT", 8000)
+
 server_key = db.get_server_key()
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
+
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
@@ -43,6 +51,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
                 return
 
             new_id, new_key = db.register_client()
+            logger.info(f"New client registered: {new_id}")
 
             self.send_response(201)
             self.send_header("Content-Type", "application/json")
@@ -60,34 +69,28 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"invalid key")
             return
 
-        # Normal heartbeat
+        # Valid heartbeat
         response = routes.handle_heartbeat(data)
+        logger.info(f"Heartbeat OK from {client_id}")
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(response).encode())
 
-    def do_GET(self):
-        filename = self.path.lstrip("/")  # e.g. "client.lua"
-        filepath = os.path.join(BASE_DIR, filename)
-
-        if not os.path.exists(filepath):
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"file not found")
-            return
-
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.end_headers()
-
-        with open(filepath, "rb") as f:
-            self.wfile.write(f.read())
-
 
 def run():
-    HTTPServer(("0.0.0.0", 8000), DiggyNetHandler).serve_forever()
+    logger.info("================================")
+    logger.info("      DiggyNet Server Booting")
+    logger.info("================================")
+    logger.info(f"Host: {HOST}")
+    logger.info(f"Port: {PORT}")
+    logger.info(f"Static file directory: {BASE_DIR}")
+    logger.info("Database initialized")
+    logger.info("Server key loaded successfully")
+    logger.info("================================")
+
+    HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
 
 if __name__ == "__main__":
