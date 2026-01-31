@@ -19,6 +19,7 @@ PORT = config_data.get("PORT", 8000)
 server_key = db.get_server_key()
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
+
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
@@ -77,6 +78,22 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(json.dumps(response).encode())
 
+    def do_GET(self):
+        filename = self.path.lstrip("/")  # e.g. "client.lua"
+        filepath = os.path.join(BASE_DIR, filename)
+
+        if not os.path.exists(filepath):
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"file not found")
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+
+        with open(filepath, "rb") as f:
+            self.wfile.write(f.read())
 
 def run():
     logger.info("================================")
@@ -91,6 +108,7 @@ def run():
     logger.info("================================")
 
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
+
 
 if __name__ == "__main__":
     run()

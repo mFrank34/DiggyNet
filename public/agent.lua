@@ -106,7 +106,7 @@ while true do
 		local ok, reply = pcall(textutils.unserializeJSON, content)
 		if ok and reply then
 
-		-- Registration or credential update
+		-- Registration and credential update
 			if reply.id and reply.key then
 				client_id = tostring(reply.id)
 				client_key = reply.key
@@ -117,6 +117,7 @@ while true do
 			if reply.stage then
 				State.stage = reply.stage
 			end
+
 			if reply.actions then
 				handleActions(reply.actions)
 			end
