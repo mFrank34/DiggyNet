@@ -94,7 +94,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         # Heartbeat → coordination layer
         response = routes.handle_heartbeat(data)
 
-        # Add home coords to response
+        # Add home cords to response
         home = db.get_home_location(client_id)
         if home:
             response["home"] = {
