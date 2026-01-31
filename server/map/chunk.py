@@ -3,7 +3,6 @@ import numpy as np
 from server.db import get_block_id, get_block_name, save_chunk, load_chunk
 from shared.constants import CHUNK_SIZE
 
-
 class Chunk:
     def __init__(self, cx, cz):
         self.cx = cx

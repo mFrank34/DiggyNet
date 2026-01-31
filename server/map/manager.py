@@ -1,9 +1,10 @@
-# map_manager.py
-from chunk import Chunk, CHUNK_SIZE
-from shared.constants import WALKABLE
+# manager.py
+
+from .chunk import Chunk
+from shared.constants import CHUNK_SIZE, WALKABLE
 
 
-class manger:
+class manager:
     def __init__(self):
         self.chunks = {}
 
@@ -19,6 +20,11 @@ class manger:
         if key not in self.chunks:
             self.chunks[key] = Chunk(cx, cz)
         return self.chunks[key]
+
+    def get_block(self, x, y, z):
+        cx, cz, lx, lz = self._coords(x, z)
+        chunk = self.get_chunk(cx, cz)
+        return chunk.get_block(lx, lz)
 
     def update_block(self, x, y, z, block_name):
         cx, cz, lx, lz = self._coords(x, z)

@@ -1,8 +1,10 @@
-from server.map.manager import manger
+# scheduler.py
+
+from server.map.manager import manager
 from server.map.astar import astar
 from server.coordination import state
 
-map_manager = manger()
+map_manager = manager()
 
 
 def estimate_cost(turtle, job):

@@ -1,7 +1,10 @@
+# main.py
+
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
 import os
+import mimetypes
 
 from server import db
 from server import routes
@@ -36,23 +39,26 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
 
+        # Parse JSON safely
         try:
             data = json.loads(body)
-        except:
+        except json.JSONDecodeError:
             self.send_response(400)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b"invalid json")
+            self.wfile.write(b'{"error":"invalid json"}')
             return
 
         client_id = data.get("id")
         client_key = data.get("key")
 
-        # Registration
+        # Registration flow
         if not client_id or not client_key:
             if data.get("server_key") != server_key:
                 self.send_response(403)
+                self.send_header("Content-Type", "application/json")
                 self.end_headers()
-                self.wfile.write(b"invalid server key")
+                self.wfile.write(b'{"error":"invalid server key"}')
                 return
 
             new_id, new_key = db.register_client()
@@ -70,11 +76,12 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         # Validation
         if not db.validate_client(client_id, client_key):
             self.send_response(401)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b"invalid key")
+            self.wfile.write(b'{"error":"invalid key"}')
             return
 
-        # --- NEW: handle home coordinates from client ---
+        # Optional: home coordinate update
         if "home_x" in data and "home_y" in data and "home_z" in data:
             db.set_home_location(
                 client_id,
@@ -83,10 +90,10 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
                 data["home_z"]
             )
 
-        # Valid heartbeat
+        # Heartbeat → coordination layer
         response = routes.handle_heartbeat(data)
 
-        # --- NEW: include stored home cords in response ---
+        # Add home coords to response
         home = db.get_home_location(client_id)
         if home:
             response["home"] = {
@@ -97,6 +104,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
         logger.info(f"Heartbeat OK from {client_id}")
 
+        # Send final response
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
@@ -108,12 +116,16 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
         if not os.path.exists(filepath):
             self.send_response(404)
+            self.send_header("Content-Type", "application/json")
             self.end_headers()
-            self.wfile.write(b"file not found")
+            self.wfile.write(b'{"error":"file not found"}')
             return
 
+        # Guess MIME type
+        ctype = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
+
         self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Type", ctype)
         self.end_headers()
 
         with open(filepath, "rb") as f:
@@ -149,10 +161,10 @@ def run():
     # Load server key
     server_key = db.get_server_key()
 
-    # Information around the server
+    # Startup banner
     info()
 
-    # Server Listener
+    # Start server
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
 
