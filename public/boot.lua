@@ -1,6 +1,6 @@
 -- boot.lua
-if fs.exists("init.lua") then
-    shell.run("init.lua")
+if fs.exists("agent.lua") then
+    shell.run("agent.lua")
 else
-    print("init.lua missing")
+    print("agent.lua missing")
 end

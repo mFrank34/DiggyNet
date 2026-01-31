@@ -11,9 +11,9 @@ def handle_heartbeat(data):
     if not turtle_id:
         turtle_id = f"turtle_{counter:02}"
         counter += 1
-        print(f"Assigned {turtle_id}", flush=True)
+        print(f"Assigned {turtle_id}", flush = True)
     else:
-        print(f"Turtle: {turtle_id} Heartbeat ({status})", flush=True)
+        print(f"Turtle: {turtle_id} Heartbeat ({status})", flush = True)
 
     heartbeat(turtle_id, status)
 

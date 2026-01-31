@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
 import os
+
 import db
 import routes
 
@@ -10,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 # Load config
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
+
 with open(CONFIG_FILE, "r") as f:
     config_data = json.load(f)
 
@@ -104,7 +106,8 @@ def run():
     logger.info(f"Static file directory: {BASE_DIR}")
     logger.info("Database initialized")
     logger.info("Server key loaded successfully")
-    logger.info(f"Server key: {server_key}")
+    logger.info(f"Server key:")
+    logger.info(f"{server_key}")
     logger.info("================================")
 
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
