@@ -2,9 +2,9 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import json
 import os
-import db
 import uuid
 
+import db
 import routes
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")

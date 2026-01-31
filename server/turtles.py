@@ -1,5 +1,4 @@
 # turtles.py
-# turtles.py
 import time
 
 turtles = {}
