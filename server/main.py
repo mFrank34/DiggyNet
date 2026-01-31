@@ -20,6 +20,7 @@ PORT = config_data.get("PORT", 8000)
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
+server_key = None
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
