@@ -12,6 +12,9 @@ end
 
 local SERVER = config.server_url .. "/heartbeat"
 
+-- Track the currently assigned job
+local current_job = nil
+
 -- Load saved credentials
 local function loadClientKey()
 	if not fs.exists(key_file) then
@@ -47,14 +50,12 @@ end
 
 local client_id, client_key = loadClientKey()
 
-local function buildHeartbeat()
+-- Build heartbeat payload
+local function buildHeartbeat(extra)
 	local payload = {
 		id = client_id,
 		key = client_key,
-		role = config.role,
 		status = State.status,
-		task = { stage = State.stage },
-		last_command = State.last_command,
 		location = Location.get(),
 		stats = Stats.collect(),
 		vision = {
@@ -64,6 +65,14 @@ local function buildHeartbeat()
 		}
 	}
 
+	-- Merge in any extra fields (job_progress, job_done, etc.)
+	if extra then
+		for k, v in pairs(extra) do
+			payload[k] = v
+		end
+	end
+
+	-- Registration case
 	if not client_id or not client_key then
 		payload.server_key = config.server_key
 	end
@@ -71,31 +80,53 @@ local function buildHeartbeat()
 	return payload
 end
 
-local function sendHeartbeat()
+-- Send heartbeat (supports extra fields)
+local function sendHeartbeat(extra)
 	return http.post(
 		SERVER,
-		textutils.serializeJSON(buildHeartbeat()),
+		textutils.serializeJSON(buildHeartbeat(extra)),
 		{ ["Content-Type"] = "application/json" }
 	)
 end
 
+-- Execute actions from server
 local function handleActions(actions)
 	for _, cmd in ipairs(actions) do
 		State.commandStarted(cmd)
 
-		local handler = Actions[cmd.type] or Device.actions[cmd.type]
+		-- Support both formats: {type="move"} or {action="move_left"}
+		local actionType = cmd.type or cmd.action
+
+		-- Safely resolve handler
+		local handler = Actions[actionType]
+		if not handler and Device.actions then
+			handler = Device.actions[actionType]
+		end
+
+		-- Execute the action
 		local ok, err = pcall(handler or function()
 		end, cmd)
 
 		State.commandFinished(cmd, ok, err)
 
+		-- Heartbeat after each action
 		local res = sendHeartbeat()
 		if res then
 			res.close()
 		end
 	end
+
+	-- If no more actions AND we have a current job, mark it complete
+	if #actions == 0 and current_job then
+		sendHeartbeat({
+			job_done = current_job.id,
+			status = "idle"
+		})
+		current_job = nil
+	end
 end
 
+-- Main loop
 while true do
 	local res = sendHeartbeat()
 
@@ -106,20 +137,28 @@ while true do
 		local ok, reply = pcall(textutils.unserializeJSON, content)
 		if ok and reply then
 
-		-- Registration and credential update
-			if reply.id and reply.key then
-				client_id = tostring(reply.id)
-				client_key = reply.key
-				saveClientKey(client_id, client_key)
-				os.setComputerLabel("Turtle " .. string.sub(client_id, 1, 4))
-			end
+		-- Server returns a LIST of items (job, task, etc.)
+			if type(reply) == "table" then
+				for _, item in ipairs(reply) do
 
-			if reply.stage then
-				State.stage = reply.stage
-			end
+				-- Registration and credential update
+					if item.id and item.key then
+						client_id = tostring(item.id)
+						client_key = item.key
+						saveClientKey(client_id, client_key)
+						os.setComputerLabel("Turtle " .. string.sub(client_id, 1, 4))
+					end
 
-			if reply.actions then
-				handleActions(reply.actions)
+					-- Job assignment
+					if item.type == "job" then
+						current_job = item.job
+					end
+
+					-- Task execution
+					if item.type == "task" then
+						handleActions({ item.task })
+					end
+				end
 			end
 		end
 	end
