@@ -1,5 +1,5 @@
 import heapq
-from shared.constants import MOVEMENT_COST, NEIGHBORS
+from server.shared.constants import NEIGHBORS
 
 
 def astar(map_manager, start, goal):

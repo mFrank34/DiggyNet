@@ -7,7 +7,7 @@ import time
 import zlib
 
 import numpy as np
-from shared.constants import CHUNK_SIZE
+from server.shared.constants import CHUNK_SIZE
 
 DB_FILE = os.path.join(os.path.dirname(__file__), "diggynet.db")
 
