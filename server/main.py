@@ -118,6 +118,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
 
 def run():
+    db.init_db()
     logger.info("================================")
     logger.info("      DiggyNet Server Booting")
     logger.info("================================")
@@ -129,6 +130,7 @@ def run():
     logger.info(f"Server key:")
     logger.info(f"{server_key}")
     logger.info("================================")
+
 
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
