@@ -116,12 +116,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         with open(filepath, "rb") as f:
             self.wfile.write(f.read())
 
-
-def run():
-    global server_key
-    db.init_db()
-    server_key = db.get_server_key()
-
+def info():
     logger.info("================================")
     logger.info("      DiggyNet Server Booting")
     logger.info("================================")
@@ -131,9 +126,14 @@ def run():
     logger.info("Database initialized")
     logger.info("Server key loaded successfully")
     logger.info(f"Server key:")
-    logger.info(f"{server_key}")
+    logger.info(f"Server key: {server_key}")
     logger.info("================================")
 
+def run():
+    global server_key
+    db.init_db()
+    server_key = db.get_server_key()
+    info()
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
 
