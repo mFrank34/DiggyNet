@@ -22,7 +22,7 @@ def init_db():
     with get_conn() as conn:
         c = conn.cursor()
 
-        # existing tables
+        # Server table: one row, holds server key
         c.execute("""
                   CREATE TABLE IF NOT EXISTS server
                   (
@@ -31,22 +31,29 @@ def init_db():
                   )
                   """)
 
+        # Clients table: includes home location directly
         c.execute("""
                   CREATE TABLE IF NOT EXISTS clients
                   (
-                      id  TEXT PRIMARY KEY,
-                      key TEXT NOT NULL
+                      id     TEXT PRIMARY KEY,
+                      key    TEXT NOT NULL,
+                      home_x INTEGER,
+                      home_y INTEGER,
+                      home_z INTEGER
                   )
                   """)
 
+        # Blocks table: includes movement cost directly
         c.execute("""
                   CREATE TABLE IF NOT EXISTS blocks
                   (
                       id   INTEGER PRIMARY KEY AUTOINCREMENT,
-                      name TEXT UNIQUE NOT NULL
+                      name TEXT UNIQUE NOT NULL,
+                      cost INTEGER
                   )
                   """)
 
+        # Chunk storage
         c.execute("""
                   CREATE TABLE IF NOT EXISTS chunks
                   (
@@ -59,24 +66,6 @@ def init_db():
                   """)
 
         conn.commit()
-
-    # NEW: add home location columns
-    add_column_if_missing("clients", "home_x", "INTEGER")
-    add_column_if_missing("clients", "home_y", "INTEGER")
-    add_column_if_missing("clients", "home_z", "INTEGER")
-
-    # NEW: add movement cost column
-    add_column_if_missing("blocks", "cost", "INTEGER")
-
-
-def add_column_if_missing(table, column, coltype):
-    with get_conn() as conn:
-        c = conn.cursor()
-        c.execute(f"PRAGMA table_info({table})")
-        cols = [row["name"] for row in c.fetchall()]
-        if column not in cols:
-            c.execute(f"ALTER TABLE {table} ADD COLUMN {column} {coltype}")
-            conn.commit()
 
 
 def get_server_key():
@@ -98,9 +87,10 @@ def register_client():
     client_key = secrets.token_hex(32)
 
     with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("INSERT INTO clients (id, key) VALUES (?, ?)",
-                  (client_id, client_key))
+        conn.execute(
+            "INSERT INTO clients (id, key) VALUES (?, ?)",
+            (client_id, client_key)
+        )
         conn.commit()
 
     return client_id, client_key
@@ -108,9 +98,11 @@ def register_client():
 
 def validate_client(client_id, client_key):
     with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("SELECT key FROM clients WHERE id=?", (client_id,))
-        row = c.fetchone()
+        cur = conn.execute(
+            "SELECT key FROM clients WHERE id=?",
+            (client_id,)
+        )
+        row = cur.fetchone()
         return bool(row and row["key"] == client_key)
 
 
@@ -118,14 +110,12 @@ def get_block_id(name: str) -> int:
     with get_conn() as conn:
         c = conn.cursor()
 
-        # Check if block exists
         c.execute("SELECT id FROM blocks WHERE name=?", (name,))
         row = c.fetchone()
         if row:
             return row["id"]
 
-        # Auto-assign default movement cost
-        # None = blocked, 1 = walkable
+        # Default movement cost rules
         if "stone" in name or "ore" in name:
             default_cost = None
         elif "sand" in name:
@@ -135,26 +125,32 @@ def get_block_id(name: str) -> int:
         else:
             default_cost = 1
 
-        c.execute("INSERT INTO blocks (name, cost) VALUES (?, ?)",
-                  (name, default_cost))
+        c.execute(
+            "INSERT INTO blocks (name, cost) VALUES (?, ?)",
+            (name, default_cost)
+        )
         conn.commit()
         return c.lastrowid
 
 
 def get_block_name(block_id: int) -> str:
     with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("SELECT name FROM blocks WHERE id=?", (block_id,))
-        row = c.fetchone()
+        cur = conn.execute(
+            "SELECT name FROM blocks WHERE id=?",
+            (block_id,)
+        )
+        row = cur.fetchone()
         return row["name"] if row else "minecraft:unknown"
 
 
 def get_block_cost(block_id: int):
     with get_conn() as conn:
-        c = conn.cursor()
-        c.execute("SELECT cost FROM blocks WHERE id=?", (block_id,))
-        row = c.fetchone()
-        return row["cost"]  # None = blocked
+        cur = conn.execute(
+            "SELECT cost FROM blocks WHERE id=?",
+            (block_id,)
+        )
+        row = cur.fetchone()
+        return row["cost"]
 
 
 def save_chunk(cx, cz, numpy_array):
@@ -171,7 +167,10 @@ def save_chunk(cx, cz, numpy_array):
 
 def load_chunk(cx, cz):
     with get_conn() as conn:
-        cur = conn.execute("SELECT data FROM chunks WHERE cx=? AND cz=?", (cx, cz))
+        cur = conn.execute(
+            "SELECT data FROM chunks WHERE cx=? AND cz=?",
+            (cx, cz)
+        )
         row = cur.fetchone()
 
         if not row:
@@ -202,6 +201,8 @@ def get_home_location(client_id):
                            WHERE id = ?
                            """, (client_id,))
         row = cur.fetchone()
+
         if not row or row["home_x"] is None:
             return None
+
         return (row["home_x"], row["home_y"], row["home_z"])

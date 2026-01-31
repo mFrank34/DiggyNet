@@ -3,8 +3,8 @@ import json
 import logging
 import os
 
-from . import db
-from . import routes
+from server import db
+from server import routes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -71,8 +71,27 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
             self.wfile.write(b"invalid key")
             return
 
+        # --- NEW: handle home coordinates from client ---
+        if "home_x" in data and "home_y" in data and "home_z" in data:
+            db.set_home_location(
+                client_id,
+                data["home_x"],
+                data["home_y"],
+                data["home_z"]
+            )
+
         # Valid heartbeat
         response = routes.handle_heartbeat(data)
+
+        # --- NEW: include stored home coords in response ---
+        home = db.get_home_location(client_id)
+        if home:
+            response["home"] = {
+                "x": home[0],
+                "y": home[1],
+                "z": home[2]
+            }
+
         logger.info(f"Heartbeat OK from {client_id}")
 
         self.send_response(200)
@@ -81,7 +100,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def do_GET(self):
-        filename = self.path.lstrip("/")  # e.g. "client.lua"
+        filename = self.path.lstrip("/")
         filepath = os.path.join(BASE_DIR, filename)
 
         if not os.path.exists(filepath):
