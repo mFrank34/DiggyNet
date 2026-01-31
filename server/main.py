@@ -126,7 +126,7 @@ def info():
     logger.info("Database initialized")
     logger.info("Server key loaded successfully")
     logger.info(f"Server key:")
-    logger.info(f"Server key: {server_key}")
+    logger.info(f"{server_key}")
     logger.info("================================")
 
 def run():
