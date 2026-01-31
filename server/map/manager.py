@@ -3,7 +3,7 @@ from chunk import Chunk, CHUNK_SIZE
 from shared.constants import WALKABLE
 
 
-class MapManager:
+class manger:
     def __init__(self):
         self.chunks = {}
 

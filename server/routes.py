@@ -1,24 +1,14 @@
-from .turtles import *
+# routes.py
 
-counter = 1
+from server.coordination import events
+
 
 def handle_heartbeat(data):
-    global counter
+    client_id = data["id"]
 
-    turtle_id = data.get("id")
-    status = data.get("status", "idle")
-
-    if not turtle_id:
-        turtle_id = f"turtle_{counter:02}"
-        counter += 1
-        print(f"Assigned {turtle_id}", flush = True)
-    else:
-        print(f"Turtle: {turtle_id} Heartbeat ({status})", flush = True)
-
-    heartbeat(turtle_id, status)
+    # Let coordination layer process the heartbeat
+    actions = events.handle_heartbeat(client_id, data)
 
     return {
-        "ok": True,
-        "id": turtle_id,
-        "known_turtles": len(get_all())
+        "actions": actions
     }
