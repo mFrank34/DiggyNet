@@ -39,25 +39,24 @@ def get_server_key():
         row = c.fetchone()
         if row:
             return row["key"]
+
         key = secrets.token_hex(32)
         c.execute("INSERT INTO server (id, key) VALUES (1, ?)", (key,))
         conn.commit()
         return key
 
 
-def register_client(client_id=None):
-    if client_id is None:
-        client_id = str(uuid.uuid4())
+def register_client():
+    client_id = uuid.uuid4().hex
+    client_key = secrets.token_hex(32)
+
     with get_conn() as conn:
         c = conn.cursor()
-        c.execute("SELECT key FROM clients WHERE id=?", (client_id,))
-        row = c.fetchone()
-        if row:
-            return client_id, row["key"]
-        key = secrets.token_hex(32)
-        c.execute("INSERT INTO clients (id, key) VALUES (?, ?)", (client_id, key))
+        c.execute("INSERT INTO clients (id, key) VALUES (?, ?)",
+                  (client_id, client_key))
         conn.commit()
-        return client_id, key
+
+    return client_id, client_key
 
 
 def validate_client(client_id, client_key):

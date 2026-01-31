@@ -1,33 +1,13 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-import os
-import uuid
 import logging
-
 import db
 import routes
 
-# --- Logging setup ---
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
-)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- Config and paths ---
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
-
-with open(CONFIG_FILE, "r") as f:
-    config_data = json.load(f)
-
-HOST = config_data.get("HOST", "127.0.0.1")
-PORT = config_data.get("PORT", 8000)
-
-# --- Database init ---
-db.init_db()
 server_key = db.get_server_key()
-logger.info(f"Server key: {server_key}")  # replaced print with logging
 
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
@@ -43,69 +23,52 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
         try:
             data = json.loads(body)
-        except json.JSONDecodeError:
+        except:
             self.send_response(400)
             self.end_headers()
             self.wfile.write(b"invalid json")
-            logger.warning("Received invalid JSON in POST")
             return
 
-        client_id = data.get("client_id")
-        client_key = data.get("client_key")
+        client_id = data.get("id")
+        client_key = data.get("key")
 
-        # first-time client registration
-        if not client_id:
-            client_id, client_key = db.register_client()
-            self.send_response(201)  # created
+        # Registration
+        if not client_id or not client_key:
+            if data.get("server_key") != server_key:
+                self.send_response(403)
+                self.end_headers()
+                self.wfile.write(b"invalid server key")
+                return
+
+            new_id, new_key = db.register_client()
+
+            self.send_response(201)
             self.send_header("Content-Type", "application/json")
             self.end_headers()
             self.wfile.write(json.dumps({
-                "message": "registered",
-                "client_id": client_id,
-                "client_key": client_key
+                "id": new_id,
+                "key": new_key
             }).encode())
-            logger.info(f"Registered new client: {client_id}")
             return
 
-        # validate existing client
+        # Validation
         if not db.validate_client(client_id, client_key):
-            self.send_response(401)  # unauthorized
+            self.send_response(401)
             self.end_headers()
-            self.wfile.write(b"invalid client key")
-            logger.warning(f"Invalid client key attempt: {client_id}")
+            self.wfile.write(b"invalid key")
             return
 
-        # valid client → process heartbeat
+        # Normal heartbeat
         response = routes.handle_heartbeat(data)
+
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(response).encode())
-        logger.info(f"Processed heartbeat for client: {client_id}")
-
-    def do_GET(self):
-        filename = self.path.lstrip("/")  # "client.lua"
-        filepath = os.path.join(BASE_DIR, filename)
-
-        if not os.path.exists(filepath):
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"file not found")
-            logger.warning(f"File not found: {filename}")
-            return
-
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.end_headers()
-
-        with open(filepath, "rb") as f:
-            self.wfile.write(f.read())
-        logger.info(f"Served file: {filename}")
 
 
 def run():
-    logger.info(f"DiggyNet running on {HOST}:{PORT}")
-    HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
+    HTTPServer(("0.0.0.0", 8000), DiggyNetHandler).serve_forever()
 
 
 if __name__ == "__main__":

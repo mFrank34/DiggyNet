@@ -7,7 +7,7 @@ KEYS_FILE = os.path.join(os.path.dirname(__file__), "keys.json")
 # Ensure file exists
 if not os.path.exists(KEYS_FILE):
     with open(KEYS_FILE, "w") as f:
-        json.dump({"server_key": "", "clients": {}}, f, indent=4)
+        json.dump({"server_key": "", "clients": {}}, f, indent = 4)
 
 
 def load_keys():
@@ -17,7 +17,7 @@ def load_keys():
 
 def save_keys(keys):
     with open(KEYS_FILE, "w") as f:
-        json.dump(keys, f, indent=4)
+        json.dump(keys, f, indent = 4)
 
 
 def generate_server_key():
