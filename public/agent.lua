@@ -3,6 +3,8 @@ local Actions = require("actions")
 local Stats = require("stats")
 local Location = require("location")
 local State = require("state")
+local Device = require("device")
+
 
 local SERVER = config.server_url .. "/heartbeat"
 local key_file = "key.json"
@@ -41,10 +43,11 @@ local function buildHeartbeat()
 		location = Location.get(),
 		stats = Stats.collect(),
 		vision = {
-			front = Turtle.inspect(),
-			up = Turtle.inspectUp(),
-			down = Turtle.inspectDown()
+			front = Device.inspect(),
+			up = Device.inspectUp(),
+			down = Device.inspectDown()
 		}
+
 	}
 
 	if not turtle_id then
@@ -72,8 +75,7 @@ local function handleActions(actions)
 	for _, cmd in ipairs(actions) do
 		State.commandStarted(cmd)
 
-		local handler = Actions[cmd.type]
-		local ok, err
+		local handler = Actions[cmd.type] or Device.actions[cmd.type]
 
 		if handler then
 			ok, err = pcall(handler, cmd)

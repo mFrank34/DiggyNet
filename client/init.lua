@@ -12,7 +12,8 @@ local FILES = {
 	"turtle.lua",
 	"stats.lua",
 	"location.lua",
-	"state.lua"
+	"state.lua",
+	"device.lua"
 }
 
 local function download(name)
