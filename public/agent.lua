@@ -5,29 +5,57 @@ local Location = require("location")
 local State = require("state")
 
 local SERVER = config.server_url .. "/heartbeat"
-local turtle_id = nil
+local key_file = "key.json"
+
+-- Load saved client_id and client_key
+local function loadClientKey()
+	if fs.exists(key_file) then
+		local f = fs.open(key_file, "r")
+		local data = textutils.unserializeJSON(f.readAll())
+		f.close()
+		return data.id, data.key
+	end
+	return nil, nil
+end
+
+-- Save client_id and client_key locally
+local function saveClientKey(id, key)
+	local f = fs.open(key_file, "w")
+	f.write(textutils.serializeJSON({id = id, key = key}))
+	f.close()
+end
+
+-- Initialize client credentials
+local turtle_id, client_key = loadClientKey()
 
 local fail_count = 0
 local MAX_FAILS = 5
 
 -- Build heartbeat payload
 local function buildHeartbeat()
-	return {
-		id = turtle_id,
+	local payload = {
 		role = config.role,
 		status = State.status,
-		task = {
-			stage = State.stage
-		},
+		task = { stage = State.stage },
 		last_command = State.last_command,
 		location = Location.get(),
 		stats = Stats.collect(),
 		vision = {
-			front = Turtle.inspect(),    -- block info in front
-			up = Turtle.inspectUp(),     -- block info above
-			down = Turtle.inspectDown()  -- block info below
+			front = Turtle.inspect(),
+			up = Turtle.inspectUp(),
+			down = Turtle.inspectDown()
 		}
 	}
+
+	if not turtle_id then
+	-- First-time registration requires server key
+		payload.server_key = config.server_key
+	else
+		payload.client_id = turtle_id
+		payload.client_key = client_key
+	end
+
+	return payload
 end
 
 -- Send heartbeat
@@ -74,15 +102,21 @@ while true do
 		local reply = textutils.unserializeJSON(res.readAll())
 		res.close()
 
-		if not turtle_id and reply.id then
+		-- First-time registration: save client_id and client_key
+		if not turtle_id and reply.id and reply.client_key then
 			turtle_id = reply.id
+			client_key = reply.client_key
 			os.setComputerLabel(turtle_id)
+			saveClientKey(turtle_id, client_key)
+			print("Registered with server. Assigned ID: " .. turtle_id)
 		end
 
+		-- Update stage if server sends it
 		if reply.stage then
 			State.stage = reply.stage
 		end
 
+		-- Execute actions if provided
 		if reply.actions then
 			handleActions(reply.actions)
 		end
