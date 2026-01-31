@@ -1,5 +1,6 @@
 # map_manager.py
 from chunk import Chunk, CHUNK_SIZE
+from shared.constants import WALKABLE
 
 
 class MapManager:
@@ -27,3 +28,9 @@ class MapManager:
     def save_all(self):
         for chunk in self.chunks.values():
             chunk.save()
+
+    def is_walkable(self, x, y, z):
+        cell = self.get_block(x, y, z)
+        if cell is None:
+            return False
+        return cell in WALKABLE
