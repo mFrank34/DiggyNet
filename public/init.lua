@@ -18,6 +18,7 @@ local FILES = {
     "boot.lua",
     "agent.lua",
     "key.json",   -- new: client registration key
+    "init.lua"    -- new: auto-updated startup file
 }
 
 -- Helper to download a single file with retries
