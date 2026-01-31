@@ -3,6 +3,7 @@
 from server import db
 from server.coordination import scheduler
 
+
 def assign_job(client_id):
     job = db.get_next_unassigned_job()
     if not job:
@@ -14,3 +15,11 @@ def assign_job(client_id):
 
     db.assign_job(job["id"], client_id)
     return job
+
+
+def update_progress(client_id, progress):
+    db.update_job_progress(progress["job_id"], progress["value"])
+
+
+def complete_job(client_id, job_id):
+    db.complete_job(job_id)
