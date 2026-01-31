@@ -153,7 +153,7 @@ def run():
     info()
 
     # Server Listener
-    HTTPServer((HOST, PORT), DiggyNewtHandler).serve_forever()
+    HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
 
 
 if __name__ == "__main__":
