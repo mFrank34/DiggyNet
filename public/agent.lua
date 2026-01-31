@@ -111,7 +111,7 @@ while true do
 				client_id = tostring(reply.id)
 				client_key = reply.key
 				saveClientKey(client_id, client_key)
-				os.setComputerLabel(client_id)
+				os.setComputerLabel("Turtle " .. string.sub(client_id, 1, 4))
 			end
 
 			if reply.stage then
