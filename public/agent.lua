@@ -146,6 +146,10 @@ while true do
 						client_id = tostring(item.id)
 						client_key = item.key
 						saveClientKey(client_id, client_key)
+
+						-- FIX: reload immediately so next heartbeat uses correct values
+						client_id, client_key = loadClientKey()
+
 						os.setComputerLabel("Turtle " .. string.sub(client_id, 1, 4))
 					end
 
