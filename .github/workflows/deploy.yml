@@ -27,9 +27,6 @@ jobs:
             echo "Removing old image..."
             podman rmi diggynet-server || true
 
-            echo "Pruning unused volumes..."
-            podman volume prune -f
-
             echo "Building fresh image..."
             podman build --no-cache -t diggynet-server .
 
