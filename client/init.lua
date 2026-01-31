@@ -6,21 +6,19 @@ if not http then
     error("HTTP API is disabled. Enable it in CC:Tweaked config (enableHttp=true).")
 end
 
--- Dependency-safe download order
+-- Correct dependency order
 local FILES = {
+    "client.lua",
     "device.lua",
     "stats.lua",
     "location.lua",
     "state.lua",
     "actions.lua",
     "turtle.lua",
-    "client.lua",
     "boot.lua",
-    "agent.lua",
-    "key.json",   -- new: client registration key
+    "agent.lua"
 }
 
--- Helper to download a single file with retries
 local function download(name)
     for attempt = 1, MAX_RETRIES do
         print(string.format("Downloading %s (attempt %d)...", name, attempt))
@@ -35,14 +33,14 @@ local function download(name)
             return true
         else
             if res then res.close() end
-            print("Failed to download " .. name .. " (HTTP or connection error). Retrying...")
+            print("Failed to download " .. name .. ". Retrying...")
             sleep(1)
         end
     end
+
     error("Failed to download " .. name .. " after " .. MAX_RETRIES .. " attempts.")
 end
 
--- Download all files
 for _, file in ipairs(FILES) do
     download(file)
 end

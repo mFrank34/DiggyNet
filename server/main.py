@@ -1,14 +1,16 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
+import os
 import db
 import routes
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 server_key = db.get_server_key()
-
+BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
@@ -65,6 +67,23 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", "application/json")
         self.end_headers()
         self.wfile.write(json.dumps(response).encode())
+
+    def do_GET(self):
+        filename = self.path.lstrip("/")  # e.g. "client.lua"
+        filepath = os.path.join(BASE_DIR, filename)
+
+        if not os.path.exists(filepath):
+            self.send_response(404)
+            self.end_headers()
+            self.wfile.write(b"file not found")
+            return
+
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.end_headers()
+
+        with open(filepath, "rb") as f:
+            self.wfile.write(f.read())
 
 
 def run():
