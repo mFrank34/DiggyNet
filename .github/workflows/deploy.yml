@@ -19,12 +19,25 @@ jobs:
             set -e
             cd DiggyNet
             git pull origin main
-
-            podman build -t diggynet-server .
+          
+            # Remove any DB file accidentally committed or left behind
+            rm -f server/diggynet.db
+          
+            # Remove old container and image
             podman stop diggynet || true
             podman rm diggynet || true
+            podman rmi diggynet-server || true
+          
+            # Remove old volumes
+            podman volume prune -f
+          
+            # Build fresh image
+            podman build --no-cache -t diggynet-server .
+          
+            # Run new container
             podman run -d \
               --name diggynet \
               -p 8000:8000 \
               --restart=always \
               diggynet-server
+
