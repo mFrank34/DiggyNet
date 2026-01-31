@@ -1,6 +1,2 @@
 requests
 websockets
-json
-uuid
-time
-secrets
