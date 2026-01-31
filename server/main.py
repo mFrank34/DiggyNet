@@ -19,7 +19,6 @@ PORT = config_data.get("PORT", 8000)
 server_key = db.get_server_key()
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
-
 class DiggyNetHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
@@ -88,10 +87,10 @@ def run():
     logger.info(f"Static file directory: {BASE_DIR}")
     logger.info("Database initialized")
     logger.info("Server key loaded successfully")
+    logger.info(f"Server key: {server_key}")
     logger.info("================================")
 
     HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
-
 
 if __name__ == "__main__":
     run()
