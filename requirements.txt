@@ -1,6 +1,5 @@
 requests
 websockets
-os
 json
 uuid
 time
