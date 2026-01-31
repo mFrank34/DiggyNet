@@ -3,6 +3,9 @@
 from server import db
 from server.coordination import scheduler
 
+from tests.dance import * # adjust path to your test package
+
+
 
 def assign_job(client_id):
     job = db.get_next_unassigned_job()
@@ -14,6 +17,9 @@ def assign_job(client_id):
         return None
 
     db.assign_job(job["id"], client_id)
+
+    start_job(client_id, job)
+
     return job
 
 
