@@ -1,5 +1,5 @@
 import heapq
-from server.shared.constants import NEIGHBORS
+from shared.constants import NEIGHBORS
 
 
 def astar(map_manager, start, goal):

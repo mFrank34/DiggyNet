@@ -3,8 +3,8 @@ import json
 import logging
 import os
 
-import db
-import routes
+from . import db
+from . import routes
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -96,6 +96,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
         with open(filepath, "rb") as f:
             self.wfile.write(f.read())
+
 
 def run():
     logger.info("================================")

@@ -1,7 +1,7 @@
 # chunk.py
 import numpy as np
 from server.db import get_block_id, get_block_name, save_chunk, load_chunk
-from server.shared.constants import CHUNK_SIZE
+from shared.constants import CHUNK_SIZE
 
 
 class Chunk:
