@@ -83,7 +83,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
         # Valid heartbeat
         response = routes.handle_heartbeat(data)
 
-        # --- NEW: include stored home coords in response ---
+        # --- NEW: include stored home cords in response ---
         home = db.get_home_location(client_id)
         if home:
             response["home"] = {
@@ -118,6 +118,7 @@ class DiggyNetHandler(BaseHTTPRequestHandler):
 
 
 def run():
+    global server_key
     db.init_db()
     server_key = db.get_server_key()
 
