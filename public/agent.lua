@@ -114,6 +114,12 @@ end
 
 --- Main loop ---
 while true do
+-- Ensure the turtle reports "idle" when not doing a job
+	if current_job == nil then
+		State.status = "idle"
+	end
+
+	-- Send heartbeat
 	local res = sendHeartbeat()
 
 	if res then
@@ -123,33 +129,32 @@ while true do
 		local ok, reply = pcall(textutils.unserializeJSON, content)
 		if ok and reply then
 
-		-- 🔑 REGISTRATION (single-object reply)
+		-- Registration response
 			if reply.id and reply.key then
 				client_id = tostring(reply.id)
 				client_key = reply.key
 				saveClientKey(client_id, client_key)
-
-				-- ⭐ FIX: reload immediately so next heartbeat uses correct values
 				client_id, client_key = loadClientKey()
-
 				os.setComputerLabel("Turtle " .. string.sub(client_id, 1, 4))
 			end
 
-			-- 🧭 Stage sync (legacy)
+			-- Legacy stage sync
 			if reply.stage then
 				State.stage = reply.stage
 			end
 
-			-- 🛠 Legacy actions
+			-- Legacy actions
 			if reply.actions then
 				handleActions(reply.actions)
 			end
 
-			-- 🧱 New job/task model (array reply)
+			-- New job/task model
 			if type(reply) == "table" and reply[1] then
 				for _, item in ipairs(reply) do
 					if item.type == "job" then
 						current_job = item.job
+						-- Mark turtle as busy because a job has begun
+						State.status = "busy"
 					elseif item.type == "task" then
 						handleActions({ item.task })
 					end
@@ -157,6 +162,6 @@ while true do
 			end
 		end
 	end
-
 	sleep(config.heartbeat_interval)
 end
+
