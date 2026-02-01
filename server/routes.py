@@ -3,7 +3,7 @@
 from server.coordination import events
 from server.coordination import tasks
 from server import db
-from coordination import scheduler
+from server.coordination import scheduler
 
 def handle_heartbeat(data):
     client_id = data["id"]
