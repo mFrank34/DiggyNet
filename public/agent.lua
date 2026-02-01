@@ -44,6 +44,16 @@ end
 
 local client_id, client_key = loadClientKey()
 
+-- inspect function
+local function safeInspect(inspectFunc)
+	local success, data = pcall(inspectFunc)
+	if success then
+		return data
+	else
+		return nil -- or {} if you want an empty table
+	end
+end
+
 --- Heartbeat ---
 local function buildHeartbeat(extra)
 	local payload = {
@@ -56,9 +66,9 @@ local function buildHeartbeat(extra)
 		location = Location.get(),
 		stats = Stats.collect(),
 		vision = {
-			front = Device.inspect(),
-			up = Device.inspectUp(),
-			down = Device.inspectDown()
+			front = safeInspect(turtle.inspect),
+			up = safeInspect(turtle.inspectUp),
+			down = safeInspect(turtle.inspectDown)
 		}
 	}
 
@@ -116,7 +126,7 @@ while true do
 
 -- 1. Ensure correct status BEFORE sending heartbeat
 	if current_job == nil then
-		-- Turtle is not working on a job → must be idle
+	-- Turtle is not working on a job → must be idle
 		State.status = "idle"
 	end
 
@@ -131,7 +141,7 @@ while true do
 		local ok, reply = pcall(textutils.unserializeJSON, content)
 		if ok and reply then
 
-			-- 3. Registration response (single object)
+		-- 3. Registration response (single object)
 			if reply.id and reply.key then
 				client_id = tostring(reply.id)
 				client_key = reply.key
@@ -159,13 +169,13 @@ while true do
 
 					if item.type == "job" then
 
-						-- Job assigned → mark busy
+					-- Job assigned → mark busy
 						current_job = item.job
 						State.status = "busy"
 
 					elseif item.type == "task" then
 
-						-- Execute task
+					-- Execute task
 						handleActions({ item.task })
 					end
 				end
