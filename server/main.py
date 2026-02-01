@@ -140,9 +140,7 @@ async def lifespan(app: FastAPI):
 
     yield  # <-- server runs here
 
-    # ============================
-    # Shutdown (optional)
-    # ============================
+    # --- Shutdown (optional) ---
     logger.info("Server shutting down…")
 
 
