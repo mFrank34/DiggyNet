@@ -1,5 +1,5 @@
 {
   "HOST": "0.0.0.0",
   "PORT": 8000,
-  "RESET_DB": true
+  "RESET_DB": false
 }

@@ -1,5 +1,5 @@
 # scheduler.py
-
+from server.coordination.tasks import enqueue_dance
 from server.map.manager import manager
 from server.map.astar import astar
 from server.coordination import state
@@ -57,3 +57,14 @@ def choose_turtle_for_job(job):
             best_cost = cost
 
     return best
+
+
+def job_completed(client_id, job_id):
+    job = active_jobs.pop(client_id, None)
+
+    if not job:
+        return
+
+    # Restart dance jobs automatically
+    if job["type"] == "dance":
+        enqueue_dance(job)
