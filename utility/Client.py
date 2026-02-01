@@ -5,8 +5,8 @@ import json
 
 # --- CONFIG ---
 SERVER_URL = "http://86.152.155.42:8000"
-SERVER_KEY = "d2c0339c250fe8ff5fad6d657d3e8edda4bccde91e7abe7c19f05853df94a274"
-HEARTBEAT_INTERVAL = 1  # seconds
+SERVER_KEY = "2b0120476b9c04a7121ea9f73b90373a8e9a9c1fd247e5469bf23f8462bd5120"
+HEARTBEAT_INTERVAL = 5  # seconds
 
 # --- STATE ---
 running = True
