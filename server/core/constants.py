@@ -1,3 +1,3 @@
 # constants.py
 
-SERVER_PRIVATE_KEY = str
+SERVER_KEY_PATH = "server_key.json"

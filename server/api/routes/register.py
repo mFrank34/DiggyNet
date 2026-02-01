@@ -1,14 +1,15 @@
 # register.py
 
-from fastapi import APIRouter, HTTPException
-from server.core.payload.register import *
-from server.core.constants import SERVER_PRIVATE_KEY
 import uuid
+import logging
+
+from fastapi import APIRouter, HTTPException
+
+from server.core.payload.register import *
+import server.core.share as share
 
 router = APIRouter()
-
-CLIENTS = []
-
+logger = logging.getLogger("router.register")
 
 # --- generate client key ---
 def generate_key():
@@ -18,8 +19,10 @@ def generate_key():
 @router.post("/register")
 async def register(data: Register):
     # --- registration Logic ---
-    if data.server_id != SERVER_PRIVATE_KEY:
+    if data.server_key != share.SERVER_KEY:
+        logger.error("Invalid server ID")
         raise HTTPException(status_code=403, detail="Server private key is not valid")
+
 
     client_id = generate_key()
     client_secret = generate_key()
@@ -31,7 +34,7 @@ async def register(data: Register):
     )
 
     # --- stores response ---
-    CLIENTS.append(response)
+    share.CLIENTS.append(response)
 
     # --- return new key for client ---
     return response

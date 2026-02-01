@@ -1,23 +1,31 @@
 # startup.py
 
-import json, os, uuid
+import os
+import uuid
+import json
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
+import server.core.share as share
+from server.core.constants import SERVER_KEY_PATH
 
-def register_startup_event(app: FastAPI):
-    @app.on_event("startup")
-    async def startup_event():
-        file_path = "server_data.json"
 
-        if os.path.exists(file_path):
-            with open(file_path, "r") as f:
-                data = json.load(f)
-                app.state.server_key = data.get("server_key")
-        else:
-            key = str(uuid.uuid4())
-            data = {"server_key": key}
-            with open(file_path, "w") as f:
-                json.dump(data, f)
-            app.state.server_key = key
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # --- startup code ---
+    if os.path.exists(SERVER_KEY_PATH):
+        with open(SERVER_KEY_PATH, "r") as f:
+            data = json.load(f)
+            share.SERVER_KEY = data.get("server_key")
+    else:
+        share.SERVER_KEY = str(uuid.uuid4())
+        with open(SERVER_KEY_PATH, "w") as f:
+            json.dump({"server_key": share.SERVER_KEY}, f)
 
-        print("Server key initialized:", app.state.server_key)
+    print("Server key initialized:", share.SERVER_KEY)
+
+    yield  # <-- this marks the application running
+
+    # --- shutdown code  ---
+    print("Server is shutting down…")
