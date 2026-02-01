@@ -231,6 +231,36 @@ def create_job(job_type, payload):
     return job_id
 
 
+def start_job(job_id, client_id):
+    """
+    Mark a job as running and assign it to a turtle.
+    """
+    with get_conn() as conn:
+        conn.execute("""
+                     UPDATE jobs
+                     SET status='running',
+                         assigned_to=?
+                     WHERE id = ?
+                     """, (client_id, job_id))
+        conn.commit()
+
+
+def next_pending_job():
+    """
+    Return the next job with status 'pending'.
+    """
+    with get_conn() as conn:
+        cur = conn.execute("""
+                           SELECT *
+                           FROM jobs
+                           WHERE status = 'pending'
+                           ORDER BY created_at ASC
+                           LIMIT 1
+                           """)
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
 def get_next_unassigned_job():
     with get_conn() as conn:
         cur = conn.execute("""
