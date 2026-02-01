@@ -117,9 +117,12 @@ async def heartbeat(request: Request):
 # --- Static Files ---
 @app.get("/{filename:path}")
 async def serve_static(filename: str):
+    if filename == "" or filename == "/":
+        filename = "index.html"
+
     filepath = os.path.join(BASE_DIR, filename)
 
-    if not os.path.exists(filepath):
+    if not os.path.exists(filepath) or not os.path.isfile(filepath):
         raise HTTPException(status_code=404, detail="file not found")
 
     ctype = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
