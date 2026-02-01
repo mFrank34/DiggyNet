@@ -8,6 +8,17 @@ import json
 
 map_manager = manager()
 
+# Track active jobs in memory
+active_jobs = {}
+
+
+def start_job(client_id, job):
+    """
+    Compatibility shim for the old scheduler API.
+    Records that a turtle has started a job.
+    """
+    active_jobs[client_id] = job
+
 
 def manhattan(a, b):
     return abs(a[0] - b[0]) + abs(a[1] - b[1]) + abs(a[2] - b[2])
