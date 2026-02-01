@@ -29,6 +29,28 @@ Actions.turn = function(cmd)
 	end
 end
 
+-- Convenience dance-style moves (mapped from server-enqueued dance steps)
+Actions.move_left = function()
+	-- turn left and step forward to simulate a left step
+	turtle.turnLeft()
+	turtle.forward()
+end
+
+Actions.move_right = function()
+	-- turn right and step forward to simulate a right step
+	turtle.turnRight()
+	turtle.forward()
+end
+
+Actions.move_forward = function()
+	turtle.forward()
+end
+
+Actions.move_back = function()
+	-- attempt to move back (Turtle.back exists on the client)
+	turtle.back()
+end
+
 Actions.dig = function()
 	turtle.dig()
 end
