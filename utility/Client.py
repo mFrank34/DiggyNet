@@ -1,85 +1,104 @@
-# Client.py
-from operator import truediv
-
+# debug_client.py
 import requests
-import time
-import uuid
 import threading
+import time
+import json
 
-# --- configuration ---
 SERVER_URL = "http://86.152.155.42:8000"
-CLIENT_ID = str(uuid.uuid4())
+SERVER_KEY = "59bc2c79fb3b6a978e335d7f2922381be294277c6e5d81c3f07f1d190d8150c8"
 HEARTBEAT_INTERVAL = 1
 
-# --- program flags ---
 running = True
+client_id = None
+client_key = None
 
 
-# --- Register Client ---
+# --- Register client ---
 def register():
-    response = requests.post(SERVER_URL + "/heartbeat", json={"client_id": CLIENT_ID})
-    if response.status_code == (200, 201):
-        print(f"[INFO] Registered client {CLIENT_ID}")
-    else:
-        print(f"[ERROR] Failed to register client {CLIENT_ID}")
+    global client_id, client_key
+    print("[INFO] Registering client...")
+    resp = requests.post(f"{SERVER_URL}/heartbeat", json={"server_key": SERVER_KEY})
+    print("[DEBUG] Register response:", resp.status_code, resp.text)
+    if resp.status_code not in (200, 201):
+        print("[ERROR] Registration failed")
+        return False
+    data = resp.json()
+    client_id = data["id"]
+    client_key = data["key"]
+    print(f"[INFO] Registered with ID={client_id}")
+    return True
 
 
-# --- Task ---
-def complete(task):
-    try:
-        resp = requests.post(f"{SERVER_URL}/task_done", json={
-            "client_id": CLIENT_ID,
-            "task_id": task.get("id")
-        })
-        if resp.status_code == 200:
-            print(f"[DONE] Completed task {task.get('action')}")
-        else:
-            print(f"[ERROR] Failed to report completion: {resp.status_code}, {resp.text}")
-    except Exception as e:
-        print("[ERROR] Task completion exception:", e)
+# --- Complete task ---
+def complete_task(task):
+    print(f"[TASK DONE] {task.get('action')} ({task.get('id')})")
+    resp = requests.post(
+        f"{SERVER_URL}/task_done",
+        json={"id": client_id, "key": client_key, "task_id": task.get("id")}
+    )
+    print("[DEBUG] Task done response:", resp.status_code, resp.text)
 
 
-# --- Heartbeat checker ---
+# --- Heartbeat loop ---
 def heartbeat_loop():
     global running
     while running:
         try:
-            resp = requests.post(f"{SERVER_URL}/heartbeat", json={"client_id": CLIENT_ID})
-            if resp.status_code != 200:
-                print(f"[ERROR] Heartbeat failed: {resp.status_code}")
-            else:
-                data = resp.json()
-                task = data.get("task")
-                if task:
-                    action = task.get("action")
-                    print(f"[TASK] Server sent task: {action}")
-
-                    # Simulate task completion immediately
-                    complete(task)
+            resp = requests.post(
+                f"{SERVER_URL}/heartbeat",
+                json={"id": client_id, "key": client_key}
+            )
         except Exception as e:
-            print("[ERROR] Heartbeat exception:", e)
+            print("[ERROR] Heartbeat request exception:", e)
+            time.sleep(HEARTBEAT_INTERVAL)
+            continue
+
+        # Check response status
+        if resp.status_code != 200:
+            print(f"[ERROR] Heartbeat failed: {resp.status_code}, {resp.text}")
+            time.sleep(HEARTBEAT_INTERVAL)
+            continue
+
+        # Parse response safely
+        try:
+            data = resp.json()
+        except Exception as e:
+            print("[ERROR] Failed to parse heartbeat JSON:", e)
+            time.sleep(HEARTBEAT_INTERVAL)
+            continue
+
+        # Normalize tasks to a list
+        tasks = []
+        if isinstance(data, dict):
+            tasks_data = data.get("task")
+            if tasks_data:
+                if isinstance(tasks_data, dict):
+                    tasks = [tasks_data]
+                elif isinstance(tasks_data, list):
+                    tasks = tasks_data
+        elif isinstance(data, list):
+            tasks = data
+
+        # Process tasks
+        for task in tasks:
+            print("[TASK RECEIVED]", task)
+            complete_task(task)
 
         time.sleep(HEARTBEAT_INTERVAL)
 
 
-# --- listen for 'q' to quite ---
-def listen_for_quit():
+# --- Quit listener ---
+def quit_listener():
     global running
     while running:
-        key = input()
-        if key.strip().lower() == "q":
+        if input().strip().lower() == "q":
             running = False
-            print("[INFO] Quit signal received. Stopping client...")
+            print("[INFO] Quit signal received, stopping...")
 
 
-# --- main ---
+# --- Main ---
 if __name__ == "__main__":
-    register()
-
-    # Start quit listener in background
-    threading.Thread(target=listen_for_quit, daemon=True).start()
-
-    # Start heartbeat loop
-    heartbeat_loop()
-
+    if register():
+        threading.Thread(target=quit_listener, daemon=True).start()
+        heartbeat_loop()
     print("[INFO] Client stopped.")

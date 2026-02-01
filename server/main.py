@@ -1,129 +1,136 @@
-# main.py
-
+# debug_client.py
+import requests
+import threading
+import time
 import json
-import logging
 import os
-import mimetypes
 
-from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import JSONResponse, FileResponse
-from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
+# --- Configuration ---
+SERVER_URL = "http://86.152.155.42:8000"
+SERVER_KEY_FILE = "server_key.json"  # file to read server key from
+HEARTBEAT_INTERVAL = 1
+STATE_FILE = "client_state.json"
 
-from server import db, routes
-from tests.dance import create_dance_job
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), "config.json")
-with open(CONFIG_FILE, "r") as f:
-    config_data = json.load(f)
-
-HOST = config_data.get("HOST", "0.0.0.0")
-PORT = config_data.get("PORT", 8000)
-RESET_DB = config_data.get("RESET_DB", False)
-
-BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
-
+# --- Program flags ---
+running = True
+client_id = None
+client_key = None
 server_key = None
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
+# --- Load server key ---
+def load_server_key():
     global server_key
-
-    if RESET_DB:
-        db_path = os.path.join(os.path.dirname(__file__), "diggynet.db")
-        if os.path.exists(db_path):
-            os.remove(db_path)
-            logger.info("Database reset enabled — old DB deleted.")
-
-    db.init_db()
-    create_dance_job()
-
-    server_key = db.get_server_key()
-
-    logger.info("================================")
-    logger.info("      DiggyNet Server Booting")
-    logger.info("================================")
-    logger.info(f"Host: {HOST}")
-    logger.info(f"Port: {PORT}")
-    logger.info(f"Static file directory: {BASE_DIR}")
-    logger.info("Database initialized")
-    logger.info("Server key loaded successfully")
-    logger.info(f"{server_key}")
-    logger.info("================================")
-
-    yield
-
-    logger.info("Server shutting down…")
+    if os.path.exists(SERVER_KEY_FILE):
+        with open(SERVER_KEY_FILE, "r") as f:
+            server_key = json.load(f).get("server_key")
+            print(f"[INFO] Loaded server key: {server_key}")
+    else:
+        raise FileNotFoundError(f"{SERVER_KEY_FILE} not found. Save the server key here.")
 
 
-app = FastAPI(lifespan=lifespan)
+# --- Load saved client state ---
+def load_state():
+    global client_id, client_key
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            data = json.load(f)
+            client_id = data.get("id")
+            client_key = data.get("key")
+            if client_id and client_key:
+                print(f"[INFO] Loaded saved client state: ID={client_id}, Key={client_key}")
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+# --- Save client state ---
+def save_state():
+    with open(STATE_FILE, "w") as f:
+        json.dump({"id": client_id, "key": client_key}, f)
+        print(f"[INFO] Client state saved.")
 
 
-# --- Heartbeat ---
-@app.post("/heartbeat")
-async def heartbeat(request: Request):
-    global server_key
-
+# --- Register Client ---
+def register():
+    global client_id, client_key
     try:
-        data = await request.json()
-    except Exception:
-        raise HTTPException(status_code=400, detail="invalid json")
-
-    client_id = data.get("id")
-    client_key = data.get("key")
-
-    # Registration
-    if not client_id or not client_key:
-        if data.get("server_key") != server_key:
-            raise HTTPException(status_code=403, detail="invalid server key")
-
-        new_id, new_key = db.register_client()
-        logger.info(f"New client registered: {new_id}")
-        return JSONResponse(status_code=201, content={"id": new_id, "key": new_key})
-
-    # Validation
-    if not db.validate_client(client_id, client_key):
-        raise HTTPException(status_code=401, detail="invalid key")
-
-    # Optional home update
-    if "home_x" in data and "home_y" in data and "home_z" in data:
-        db.set_home_location(client_id, data["home_x"], data["home_y"], data["home_z"])
-
-    # Coordination layer
-    response = routes.handle_heartbeat(data)
-
-    # Add home cords
-    home = db.get_home_location(client_id)
-    if home:
-        response.append({"type": "home", "home": {"x": home[0], "y": home[1], "z": home[2]}})
-
-    logger.info(f"Heartbeat OK from {client_id}")
-
-    return response
+        resp = requests.post(
+            f"{SERVER_URL}/heartbeat",
+            json={"server_key": server_key}
+        )
+        if resp.status_code in (200, 201):
+            data = resp.json()
+            client_id = data.get("id")
+            client_key = data.get("key")
+            print(f"[INFO] Registered client: ID={client_id}, Key={client_key}")
+            return True
+        else:
+            print(f"[ERROR] Failed to register: {resp.status_code}, {resp.text}")
+            return False
+    except Exception as e:
+        print("[ERROR] Exception during registration:", e)
+        return False
 
 
-# --- Static Files ---
-@app.get("/{filename:path}")
-async def serve_static(filename: str):
-    if filename == "" or filename == "/":
-        filename = "index.html"
+# --- Complete task ---
+def complete(task):
+    try:
+        resp = requests.post(
+            f"{SERVER_URL}/task_done",
+            json={"id": client_id, "key": client_key, "task_id": task.get("id")}
+        )
+        if resp.status_code == 200:
+            print(f"[DONE] Completed task: {task.get('action')}")
+        else:
+            print(f"[ERROR] Failed to report task completion: {resp.status_code}, {resp.text}")
+    except Exception as e:
+        print("[ERROR] Task completion exception:", e)
 
-    filepath = os.path.join(BASE_DIR, filename)
 
-    if not os.path.exists(filepath) or not os.path.isfile(filepath):
-        raise HTTPException(status_code=404, detail="file not found")
+# --- Heartbeat loop ---
+def heartbeat_loop():
+    global running
+    while running:
+        try:
+            resp = requests.post(
+                f"{SERVER_URL}/heartbeat",
+                json={"id": client_id, "key": client_key}
+            )
+            if resp.status_code != 200:
+                print(f"[ERROR] Heartbeat failed: {resp.status_code}, {resp.text}")
+            else:
+                data = resp.json()
+                tasks = data.get("task")
+                # Tasks can be a single task or a list
+                if tasks:
+                    if isinstance(tasks, dict):
+                        tasks = [tasks]
+                    for task in tasks:
+                        print(f"[TASK] Server sent task: {task.get('action')}")
+                        complete(task)
+        except Exception as e:
+            print("[ERROR] Heartbeat exception:", e)
 
-    ctype = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
-    return FileResponse(filepath, media_type=ctype)
+        time.sleep(HEARTBEAT_INTERVAL)
+
+
+# --- Listen for 'q' to quit ---
+def listen_for_quit():
+    global running
+    while running:
+        key = input()
+        if key.strip().lower() == "q":
+            running = False
+            print("[INFO] Quit signal received. Stopping client...")
+
+
+# --- Main ---
+if __name__ == "__main__":
+    load_server_key()
+    load_state()
+
+    if register():
+        # Start quit listener
+        threading.Thread(target=listen_for_quit, daemon=True).start()
+        # Start heartbeat loop
+        heartbeat_loop()
+
+    print("[INFO] Client stopped.")
