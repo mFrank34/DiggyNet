@@ -104,7 +104,7 @@ async def heartbeat(request: Request):
     # Coordination layer
     response = routes.handle_heartbeat(data)
 
-    # Add home coords
+    # Add home cords
     home = db.get_home_location(client_id)
     if home:
         response.append({"type": "home", "home": {"x": home[0], "y": home[1], "z": home[2]}})
