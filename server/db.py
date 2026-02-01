@@ -231,6 +231,22 @@ def create_job(job_type, payload):
     return job_id
 
 
+def next_pending_job():
+    """
+    Return the next job with status 'pending'.
+    """
+    with get_conn() as conn:
+        cur = conn.execute("""
+                           SELECT *
+                           FROM jobs
+                           WHERE status = 'pending'
+                           ORDER BY created_at ASC
+                           LIMIT 1
+                           """)
+        row = cur.fetchone()
+        return dict(row) if row else None
+
+
 def get_next_unassigned_job():
     with get_conn() as conn:
         cur = conn.execute("""
