@@ -3,8 +3,7 @@
 from server import db
 from server.coordination import scheduler
 
-from tests.dance import * # adjust path to your test package
-
+from tests.dance import *  # adjust path to your test package
 
 
 def assign_job(client_id):

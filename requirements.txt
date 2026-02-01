@@ -1,3 +1,20 @@
+fastapi
+uvicorn[standard]
+
 requests
 websockets
 numpy
+
+pydantic
+
+# Database (SQLite)
+sqlalchemy
+
+# Optional: if you use async SQLite
+aiosqlite
+
+# For static file MIME detection
+python-multipart
+
+# If you use A* or mapping code that relies on numpy/scipy
+scipy

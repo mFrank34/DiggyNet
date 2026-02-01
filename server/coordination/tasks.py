@@ -1,7 +1,9 @@
 # tasks.py
 from collections import defaultdict
+import logging
 
 task_queues = defaultdict(list)
+logger = logging.getLogger(__name__)
 
 
 def enqueue(client_id, task):
@@ -10,7 +12,13 @@ def enqueue(client_id, task):
 
 def next_task(client_id):
     if task_queues[client_id]:
-        return task_queues[client_id].pop(0)
+        task = task_queues[client_id].pop(0)
+
+        # Log AFTER retrieving the task
+        logger.info(f"[TASK DISPATCH] → Turtle {client_id}: {task}")
+
+        return task
+
     return None
 
 

@@ -1,13 +1,17 @@
-# main.py
+# main.py (FastAPI version)
 
-from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 import logging
 import os
 import mimetypes
 
-from server import db
-from server import routes
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+
+from server import db, routes
 from tests.dance import create_dance_job
 
 logging.basicConfig(level=logging.INFO)
@@ -21,118 +25,87 @@ with open(CONFIG_FILE, "r") as f:
 
 HOST = config_data.get("HOST", "0.0.0.0")
 PORT = config_data.get("PORT", 8000)
-
 RESET_DB = config_data.get("RESET_DB", False)
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "public")
 
 server_key = None
 
+app = FastAPI()
 
-class DiggyNetHandler(BaseHTTPRequestHandler):
-
-    def do_POST(self):
-        if self.path != "/heartbeat":
-            self.send_response(404)
-            self.end_headers()
-            return
-
-        length = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(length)
-
-        # Parse JSON safely
-        try:
-            data = json.loads(body)
-        except json.JSONDecodeError:
-            self.send_response(400)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"error":"invalid json"}')
-            return
-
-        client_id = data.get("id")
-        client_key = data.get("key")
-
-        # Registration flow
-        if not client_id or not client_key:
-            if data.get("server_key") != server_key:
-                self.send_response(403)
-                self.send_header("Content-Type", "application/json")
-                self.end_headers()
-                self.wfile.write(b'{"error":"invalid server key"}')
-                return
-
-            new_id, new_key = db.register_client()
-            logger.info(f"New client registered: {new_id}")
-
-            self.send_response(201)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({
-                "id": new_id,
-                "key": new_key
-            }).encode())
-            return
-
-        # Validation
-        if not db.validate_client(client_id, client_key):
-            self.send_response(401)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"error":"invalid key"}')
-            return
-
-        # Optional: home coordinate update
-        if "home_x" in data and "home_y" in data and "home_z" in data:
-            db.set_home_location(
-                client_id,
-                data["home_x"],
-                data["home_y"],
-                data["home_z"]
-            )
-
-        # Heartbeat → coordination layer
-        response = routes.handle_heartbeat(data)
-
-        # Add home cords to response
-        home = db.get_home_location(client_id)
-        if home:
-            response["home"] = {
-                "x": home[0],
-                "y": home[1],
-                "z": home[2]
-            }
-
-        logger.info(f"Heartbeat OK from {client_id}")
-
-        # Send final response
-        self.send_response(200)
-        self.send_header("Content-Type", "application/json")
-        self.end_headers()
-        self.wfile.write(json.dumps(response).encode())
-
-    def do_GET(self):
-        filename = self.path.lstrip("/")
-        filepath = os.path.join(BASE_DIR, filename)
-
-        if not os.path.exists(filepath):
-            self.send_response(404)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(b'{"error":"file not found"}')
-            return
-
-        # Guess MIME type
-        ctype = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
-
-        self.send_response(200)
-        self.send_header("Content-Type", ctype)
-        self.end_headers()
-
-        with open(filepath, "rb") as f:
-            self.wfile.write(f.read())
+# Allow local testing
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
+# --- Heartbeat Endpoint ---
+@app.post("/heartbeat")
+async def heartbeat(request: Request):
+    global server_key
+
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="invalid json")
+
+    client_id = data.get("id")
+    client_key = data.get("key")
+
+    # Registration flow
+    if not client_id or not client_key:
+        if data.get("server_key") != server_key:
+            raise HTTPException(status_code=403, detail="invalid server key")
+
+        new_id, new_key = db.register_client()
+        logger.info(f"New client registered: {new_id}")
+        return JSONResponse(
+            status_code=201,
+            content={"id": new_id, "key": new_key}
+        )
+
+    # Validation
+    if not db.validate_client(client_id, client_key):
+        raise HTTPException(status_code=401, detail="invalid key")
+
+    # Optional: home coordinate update
+    if "home_x" in data and "home_y" in data and "home_z" in data:
+        db.set_home_location(
+            client_id,
+            data["home_x"],
+            data["home_y"],
+            data["home_z"]
+        )
+
+    # Heartbeat → coordination layer
+    response = routes.handle_heartbeat(data)
+
+    # Add home coords to response
+    home = db.get_home_location(client_id)
+    if home:
+        response["home"] = {"x": home[0], "y": home[1], "z": home[2]}
+
+    logger.info(f"Heartbeat OK from {client_id}")
+
+    return response
+
+
+# --- Static File Serving ---
+@app.get("/{filename:path}")
+async def serve_static(filename: str):
+    filepath = os.path.join(BASE_DIR, filename)
+
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="file not found")
+
+    ctype = mimetypes.guess_type(filepath)[0] or "application/octet-stream"
+    return FileResponse(filepath, media_type=ctype)
+
+
+# --- Startup Banner ---
 def info():
     logger.info("================================")
     logger.info("      DiggyNet Server Booting")
@@ -147,28 +120,29 @@ def info():
     logger.info("================================")
 
 
-def run():
-    global server_key
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
     if RESET_DB:
         db_path = os.path.join(os.path.dirname(__file__), "diggynet.db")
         if os.path.exists(db_path):
             os.remove(db_path)
             logger.info("Database reset enabled — old DB deleted.")
 
-    # Initialize schema
     db.init_db()
     create_dance_job()
 
-    # Load server key
+    global server_key
     server_key = db.get_server_key()
 
-    # Startup banner
-    info()
+    info()  # your startup banner
 
-    # Start server
-    HTTPServer((HOST, PORT), DiggyNetHandler).serve_forever()
+    yield  # <-- server runs here
+
+    # ============================
+    # Shutdown (optional)
+    # ============================
+    logger.info("Server shutting down…")
 
 
-if __name__ == "__main__":
-    run()
+app = FastAPI(lifespan=lifespan)
