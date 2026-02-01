@@ -1,6 +1,6 @@
 local Actions = {}
 
--- ---- Movement ----
+-- Basic movement
 Actions.move_left = function()
 	turtle.turnLeft()
 	turtle.forward()
@@ -19,9 +19,9 @@ Actions.move_back = function()
 	turtle.back()
 end
 
+-- Generic movement
 Actions.move = function(cmd)
 	local n = cmd.n or 1
-
 	for i = 1, n do
 		if cmd.dir == "forward" then
 			turtle.forward()
@@ -29,6 +29,8 @@ Actions.move = function(cmd)
 			turtle.up()
 		elseif cmd.dir == "down" then
 			turtle.down()
+		elseif cmd.dir == "back" then
+			turtle.back()
 		else
 			error("invalid move dir: " .. tostring(cmd.dir))
 		end
@@ -52,7 +54,6 @@ end
 Actions.refuel = function(cmd)
 	local target = cmd.amount or math.huge
 	local gained = 0
-
 	for slot = 1, 16 do
 		turtle.select(slot)
 		if turtle.refuel(0) then
@@ -65,11 +66,9 @@ Actions.refuel = function(cmd)
 			end
 		end
 	end
-
 	if gained == 0 then
 		error("no fuel available")
 	end
-
 	return gained
 end
 
