@@ -1,18 +1,18 @@
-local turtle = require("turtle")
+local Turtle = require("turtle_api")
 
 local Actions = {}
 
--- ---- Movement ----
+-- ---- Generic movement ----
 Actions.move = function(cmd)
 	local n = cmd.n or 1
 
 	for i = 1, n do
 		if cmd.dir == "forward" then
-			turtle.forward()
+			Turtle.forward()
 		elseif cmd.dir == "up" then
-			turtle.up()
+			Turtle.up()
 		elseif cmd.dir == "down" then
-			turtle.down()
+			Turtle.down()
 		else
 			error("invalid move dir: " .. tostring(cmd.dir))
 		end
@@ -21,38 +21,36 @@ end
 
 Actions.turn = function(cmd)
 	if cmd.dir == "left" then
-		turtle.left()
+		Turtle.left()
 	elseif cmd.dir == "right" then
-		turtle.right()
+		Turtle.right()
 	else
 		error("invalid turn dir: " .. tostring(cmd.dir))
 	end
 end
 
--- Convenience dance-style moves (mapped from server-enqueued dance steps)
+-- ---- Convenience moves (server uses these) ----
 Actions.move_left = function()
-	-- turn left and step forward to simulate a left step
-	turtle.turnLeft()
-	turtle.forward()
+	Turtle.left()
+	Turtle.forward()
 end
 
 Actions.move_right = function()
-	-- turn right and step forward to simulate a right step
-	turtle.turnRight()
-	turtle.forward()
+	Turtle.right()
+	Turtle.forward()
 end
 
 Actions.move_forward = function()
-	turtle.forward()
+	Turtle.forward()
 end
 
 Actions.move_back = function()
-	-- attempt to move back (Turtle.back exists on the client)
-	turtle.back()
+	Turtle.back()
 end
 
+-- ---- Dig ----
 Actions.dig = function()
-	turtle.dig()
+	Turtle.dig()
 end
 
 -- ---- Refuel ----
@@ -61,11 +59,11 @@ Actions.refuel = function(cmd)
 	local gained = 0
 
 	for slot = 1, 16 do
-		turtle.select(slot)
+		Turtle.select(slot)
 
-		if turtle.canRefuel() then
-			while turtle.itemCount() > 0 and gained < target do
-				if turtle.refuel(1) then
+		if Turtle.canRefuel() then
+			while Turtle.itemCount() > 0 and gained < target do
+				if Turtle.refuel(1) then
 					gained = gained + 1
 				else
 					break
