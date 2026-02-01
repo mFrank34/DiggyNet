@@ -3,7 +3,6 @@ local Actions = require("actions")
 local Stats = require("stats")
 local Location = require("location")
 local State = require("state")
-local Device = require("device")
 
 local key_file = "/disk/key.json"
 if not fs.exists("/disk") then

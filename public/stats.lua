@@ -1,21 +1,20 @@
 -- stats.lua
-local T = require("turtle")
-
 local Stats = {}
 
 function Stats.collect()
 	local inv = {}
 
+	-- Collect non-empty slots
 	for slot = 1, 16 do
-		local item = T.itemCount(slot) -- <- use interface
-		if item > 0 then
-			table.insert(inv, {slot = slot, count = item})
+		local count = T.itemCount(slot)  -- interface function
+		if count > 0 then
+			table.insert(inv, {slot = slot, count = count})
 		end
 	end
 
 	return {
-		fuel = T.fuel(),           -- <- use interface
-		selected_slot = turtle.getSelectedSlot(),  -- optional, can wrap T.select
+		fuel = turtle.getFuelLevel(),       -- native turtle function
+		selected_slot = turtle.getSelectedSlot(), -- native turtle function
 		inventory = inv
 	}
 end
