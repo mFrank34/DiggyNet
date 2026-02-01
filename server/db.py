@@ -237,11 +237,11 @@ def start_job(job_id, client_id):
     """
     with get_conn() as conn:
         conn.execute("""
-                     UPDATE jobs
-                     SET status='running',
-                         assigned_to=?
-                     WHERE id = ?
-                     """, (client_id, job_id))
+            UPDATE jobs
+            SET status='running',
+                assigned_to=?
+            WHERE id = ?
+        """, (client_id, job_id))
         conn.commit()
 
 
