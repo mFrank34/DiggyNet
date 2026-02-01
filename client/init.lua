@@ -9,12 +9,10 @@ end
 -- Correct dependency order
 local FILES = {
     "client.lua",
-    "device.lua",
     "stats.lua",
     "location.lua",
     "state.lua",
     "actions.lua",
-    "turtle.lua",
     "boot.lua",
     "agent.lua"
 }
