@@ -60,10 +60,17 @@ def choose_turtle_for_job(job):
 
 
 def job_completed(client_id, job_id):
-    job = active_jobs.pop(client_id, None)
+    job = active_jobs.get(client_id)
 
     if not job:
         return
+
+    # Ensure this is the correct job finishing
+    if job.get("id") != job_id:
+        return
+
+    # Remove it from active jobs
+    active_jobs.pop(client_id, None)
 
     # Restart dance jobs automatically
     if job["type"] == "dance":
