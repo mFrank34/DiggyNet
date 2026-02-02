@@ -23,6 +23,9 @@ async def ping(data: Ping):
     job = str
     # --- ping decision ---
     if data.fuel_level >= 25.0:
+        # plan to use cords to work out the distance
+        # from current location to home location
+        # get it work out how much fuel need to get home and cache it in client
         job = "home"
     elif data.job == "idle":
         job = "request"
