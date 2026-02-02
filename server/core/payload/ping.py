@@ -1,8 +1,8 @@
-# heartbeat.py
+# ping.py
 from pydantic import BaseModel
 
 
-class Heartbeat(BaseModel):
+class Ping(BaseModel):
     turtle_id: str
     role: str
     job: str
