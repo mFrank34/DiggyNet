@@ -20,15 +20,15 @@ class Client(base):
                      )
                      """)
 
-        conn.execute("""
+        conn.execute(f"""
                      CREATE INDEX IF NOT EXISTS idx_client_auth
-                         ON client (id, key)
+                         ON {Client.table_name} (id, key)
                      """)
 
     @classmethod
     def validate(cls, conn, client_id: str, client_key: str, client_type: str) -> bool:
         cur = conn.execute(
-            "SELECT 1 FROM client WHERE id = ? AND key = ? AND type = ? ",
+            f"SELECT 1 FROM {Client.table_name} WHERE id = ? AND key = ? AND type = ? ",
             (client_id, client_key, client_type)
         )
         return cur.fetchone() is not None
@@ -39,7 +39,7 @@ class Client(base):
         key = secrets.token_urlsafe(32)
 
         cur = conn.execute(
-            "INSERT INTO client (id, key, type) VALUES (?, ?, ?)",
+            f"INSERT INTO {Client.table_name} (id, key, type) VALUES (?, ?, ?)",
             (id, key, client_type)
         )
         conn.commit()
