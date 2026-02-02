@@ -16,7 +16,7 @@ from server.core.constants import SERVER_KEY_PATH
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- initialize DB ---
-    conn = initialize()
+    conn = initialize(SERVER_KEY_PATH)
     share.DB_CONN = conn
 
     # --- ensure server secure is in database --

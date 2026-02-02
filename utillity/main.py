@@ -25,7 +25,7 @@ def handshake() -> bool:
         logger.error("Error connecting to server: %s", e)
         return False
 
-    if data.get("handshake") == "Diggy Net server":
+    if data.get("handshake") == "Diggy Net Server":
         logger.info("Diggy Net server is alive")
         return True
     else:

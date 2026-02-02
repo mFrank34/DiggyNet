@@ -6,8 +6,10 @@ import logging
 from fastapi import APIRouter, HTTPException
 
 from server.core.payload.register import *
+from server.core.share import DB_CONN
 from server.core.database.clients import Client
 import server.core.share as share
+
 
 router = APIRouter()
 logger = logging.getLogger("router.register")
@@ -27,6 +29,7 @@ async def register(data: Register):
 
     # --- generate client credentials and store in DB ---
     client_id, client_secret = Client.register(share.DB_CONN, client_type=data.turtle_type)
+    Client.touch(share.DB_CONN, client_id)
 
     # --- response to client ---
     response = Response(
