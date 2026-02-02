@@ -9,6 +9,7 @@ class Data(BaseModel):
     role: str
     job_id: str
     job_level: int
+
     # coordinates as simple table
     location: Dict[str, int] = Field(
         default_factory=lambda: {

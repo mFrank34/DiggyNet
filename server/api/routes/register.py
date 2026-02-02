@@ -1,23 +1,15 @@
 # register.py
 
-import uuid
 import logging
 
 from fastapi import APIRouter, HTTPException
 
-from server.core.payload.register import *
-from server.core.share import DB_CONN
-from server.core.database.clients import Client
 import server.core.share as share
-
+from server.core.database.clients import Client
+from server.core.payload.register import *
 
 router = APIRouter()
 logger = logging.getLogger("router.register")
-
-
-# --- generate client key ---
-def generate_key():
-    return str(uuid.uuid4())
 
 
 @router.post("/register")
