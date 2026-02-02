@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from server.api.events.startup import lifespan
 from server.api.routes.register import router as register_router
+from server.api.routes.ping import router as ping_router
 
 # --- Pass lifespan when creating app ---
 app = FastAPI(lifespan=lifespan)
@@ -13,3 +14,4 @@ async def root():
 
 # --- Include routes ---
 app.include_router(register_router)
+app.include_router(ping_router)
