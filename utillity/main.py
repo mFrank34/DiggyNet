@@ -16,8 +16,6 @@ SERVER_URL = "http://127.0.0.1:8000"
 SERVER_KEY = "4YoAEameV4W7ZuOOGihH_wBkm4rXufeRlxhhKZso4ls"
 
 # --- Client creds ---
-# CLIENT_ID
-# CLIENT_SECRET
 CLIENT_TYPE = "turtle"
 
 
