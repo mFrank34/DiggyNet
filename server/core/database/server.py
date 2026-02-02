@@ -13,6 +13,7 @@ class Server(db):
         conn.execute(f"""
         CREATE TABLE IF NOT EXISTS {Server.table_name} 
         (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
             secret TEXT NOT NULL
         )
         """)
@@ -22,7 +23,7 @@ class Server(db):
         secret: str
         # --- get a key from program if already started up before
         cur = conn.execute(
-            f"SELECT secret FROM {Server.table_name} LIMIT 1"
+            f"SELECT secret FROM {Server.table_name} WHERE id = 1"
         )
 
         # --- get the row & return key ---
@@ -33,7 +34,7 @@ class Server(db):
         # --- else no key generate and store new key ---
         secret = secrets.token_urlsafe(32)
         conn.execute(
-            f"INSERT INTO {Server.table_name} VALUES (?)", (secret,)
+            f"INSERT INTO {Server.table_name} (id, secret) VALUES (1, ?)", (secret,)
         )
         conn.commit()
 
