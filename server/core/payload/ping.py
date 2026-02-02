@@ -11,4 +11,3 @@ class Ping(BaseModel):
 
 class Pong(BaseModel):
     job: str
-    status: str

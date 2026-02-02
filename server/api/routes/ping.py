@@ -32,7 +32,6 @@ async def ping(data: Ping):
     # --- create new payload ---
     response = Pong(
         job=job,
-        status="OK",
     )
     # --- debug response ---
     logger.debug(f"Pong response {response} to turtle {data.turtle_key}")
