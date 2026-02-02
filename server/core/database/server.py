@@ -1,38 +1,40 @@
 # server.py
 
+from server.core.lib.dbbase import DBBase as db
 import sqlite3
 import secrets
 
 
-def init_table(conn):
-    """Create the server table if it doesn’t exist."""
-    c = conn.cursor()
-    c.execute("""
-              CREATE TABLE IF NOT EXISTS server
-              (
-                  id  INTEGER PRIMARY KEY,
-                  key TEXT NOT NULL
-              )
-              """)
+class Server(db):
+    table_name = 'server'
 
+    @classmethod
+    def init_tables(cls, conn: sqlite3.Connection):
+        conn.execute(f"""
+        CREATE TABLE IF NOT EXISTS {Server.table_name} 
+        (
+            secret TEXT NOT NULL
+        )
+        """)
 
-def get_server_key(conn):
-    """Fetch the server key, or generate one if it doesn't exist."""
-    c = conn.cursor()
-    c.execute("SELECT key FROM server WHERE id=1")
-    row = c.fetchone()
-    if row:
-        return row["key"]
+    @classmethod
+    def ensure_secret(cls, conn: sqlite3.Connection) -> str:
+        secret: str
+        # --- get a key from program if already started up before
+        cur = conn.execute(
+            f"SELECT secret FROM {Server.table_name} LIMIT 1"
+        )
 
-    # generate new key
-    key = secrets.token_hex(32)
-    c.execute("INSERT INTO server (id, key) VALUES (1, ?)", (key,))
-    conn.commit()
-    return key
+        # --- get the row & return key ---
+        row = cur.fetchone()
+        if row:
+            return row["secret"]
 
+        # --- else no key generate and store new key ---
+        secret = secrets.token_urlsafe(32)
+        conn.execute(
+            f"INSERT INTO {Server.table_name} VALUES (?)", (secret,)
+        )
+        conn.commit()
 
-def set_server_key(conn, key):
-    """Overwrite server key if needed."""
-    c = conn.cursor()
-    c.execute("UPDATE server SET key=? WHERE id=1", (key,))
-    conn.commit()
+        return secret

@@ -1,18 +1,18 @@
 # client.py
 
-from server.core.lib.dbbase import DBBase as base
+from server.core.lib.dbbase import DBBase as db
 import sqlite3
 import secrets
 import uuid
 
 
-class Client(base):
+class Client(db):
     table_name = 'client'
 
     @classmethod
     def init_tables(cls, conn: sqlite3.Connection):
-        conn.execute("""
-                     CREATE TABLE IF NOT EXISTS client
+        conn.execute(f"""
+                     CREATE TABLE IF NOT EXISTS {Client.table_name}
                      (
                          id   TEXT PRIMARY KEY,
                          key  TEXT NOT NULL,
