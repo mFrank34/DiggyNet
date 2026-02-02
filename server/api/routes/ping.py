@@ -14,7 +14,7 @@ logger = logging.getLogger("router.ping")
 
 @router.get("/ping")
 async def ping(data: Ping):
-    if not Client.validate(data.turtle_id, data.turtle_key):
+    if not Client.validate(share.DB_CONN, data.turtle_id, data.turtle_key, data.client_type):
         raise HTTPException(status_code=403, detail="Invalid Turtle")
 
     # --- update last seen ---
