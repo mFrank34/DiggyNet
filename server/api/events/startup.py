@@ -3,8 +3,10 @@
 import os
 import uuid
 import json
-from contextlib import asynccontextmanager
 
+from server.core.database.initialize import initialize
+from server.core.database.server import Server
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 import server.core.share as share
@@ -13,19 +15,18 @@ from server.core.constants import SERVER_KEY_PATH
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # --- startup code ---
-    if os.path.exists(SERVER_KEY_PATH):
-        with open(SERVER_KEY_PATH, "r") as f:
-            data = json.load(f)
-            share.SERVER_KEY = data.get("server_key")
-    else:
-        share.SERVER_KEY = str(uuid.uuid4())
-        with open(SERVER_KEY_PATH, "w") as f:
-            json.dump({"server_key": share.SERVER_KEY}, f)
+    # --- initialize DB ---
+    conn = initialize()
+    share.DB_CONN = conn
 
-    print("Server key initialized:", share.SERVER_KEY)
+    # --- ensure server secure is in database --
+    secret = Server.ensure_secret(conn)
+    share.SERVER_SECRET = secret
+    print(f"Server key initialized: {secret}")
 
-    yield  # <-- this marks the application running
+    # --- application layer ---
+    yield
 
     # --- shutdown code  ---
+    conn.close()
     print("Server is shutting down…")
