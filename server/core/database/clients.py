@@ -12,11 +12,10 @@ def init_table(conn):
                  (
                      id     TEXT PRIMARY KEY,
                      key    TEXT NOT NULL,
+                     type   TEXT NOT NULL,
                      home_x INTEGER,
                      home_y INTEGER,
                      home_z INTEGER
                  )
                  """)
 
-
-def

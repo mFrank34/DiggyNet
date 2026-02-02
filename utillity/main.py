@@ -11,7 +11,7 @@ logger = logging.getLogger("client.handshake")
 
 # --- CLIENT CONFIG ---
 SERVER_URL = "http://127.0.0.1:8000"
-SERVER_KEY = "1dd57613-4243-487e-aeb5-0823ec9ac14f"
+SERVER_KEY = "cfcd7624-cae5-4243-81dd-08086bada086"
 TURTLE_TYPE = "turtle"
 
 
