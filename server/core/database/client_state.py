@@ -4,7 +4,7 @@ import json
 import sqlite3
 
 from server.core.lib.dbbase import DBBase as db
-from server.core.payload.returns import JobReturn, inventory, coords
+from server.core.payload.returns import Job_Return, Inventory, Coords
 
 
 class Client_State(db):
@@ -27,8 +27,16 @@ class Client_State(db):
         conn.commit()
 
     @classmethod
-    def update(cls, conn: sqlite3.Connection, client_id: str, coords_data: dict,
-               job_id: str, job_level: int, inventory_data: list, fuel: float):
+    def update(
+            cls,
+            conn: sqlite3.Connection,
+            client_id: str,
+            coords_data: Coords,
+            job_id: str,
+            job_level: int,
+            inventory_data: Inventory,
+            fuel: float
+    ) -> None:
         """
         Insert or update the client state.
         coords_data: dict with keys x, y, z
@@ -65,7 +73,7 @@ class Client_State(db):
         if not row:
             return None
         coord_data = json.loads(row["coords"])
-        return coords(
+        return Coords(
             x=coord_data.get("x", 0),
             y=coord_data.get("y", 0),
             z=coord_data.get("z", 0)
@@ -82,7 +90,7 @@ class Client_State(db):
         )
         if not row:
             return None
-        return JobReturn(
+        return Job_Return(
             job_id=row["job_id"],
             job_stage=row["job_level"]
         )
@@ -99,7 +107,7 @@ class Client_State(db):
         if not row:
             return None
         inv_data = json.loads(row["inventory"])
-        return inventory(slots=inv_data)
+        return Inventory(slots=inv_data)
 
     @classmethod
     def get_fuel(cls, conn: sqlite3.Connection, client_id: str):

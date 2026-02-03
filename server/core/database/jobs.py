@@ -4,7 +4,7 @@ import sqlite3
 from typing import List
 
 from server.core.lib.dbbase import DBBase as db
-from server.core.payload.returns import JobReturn
+from server.core.payload.returns import Job_Return
 
 
 class Jobs(db):
@@ -32,7 +32,7 @@ class Jobs(db):
         if not row:
             return None
 
-        return JobReturn(
+        return Job_Return(
             job_id=row["job_id"],
             job_stage=row["job_level"]
         )

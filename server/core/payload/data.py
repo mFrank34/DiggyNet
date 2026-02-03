@@ -1,7 +1,8 @@
 # data.py
-from typing import Dict, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+
+from server.core.payload.returns import Coords, Inventory, Vision
 
 
 class Data(BaseModel):
@@ -10,26 +11,13 @@ class Data(BaseModel):
     client_type: str
     job_id: str
     job_level: int
-
+    fuel: float
     # coordinates as simple table
-    location: Dict[str, int] = Field(
-        default_factory=lambda: {
-            "x": 0,
-            "y": 0,
-            "z": 0,
-        }
-    )
-
+    location: Coords
     # inventory: slot -> item id (0–15)
-    inventory: Dict[int, Optional[str]] = Field(
-        default_factory=lambda: {i: None for i in range(16)}
-    )
-
+    slots: Inventory
     # vision blocks
-    vision: Dict[str, Optional[str]] = Field(
-        default_factory=lambda: {
-            "top": None,
-            "middle": None,
-            "bottom": None,
-        }
-    )
+    vision: Vision
+
+class ReturnData(BaseModel):
+    response: str
