@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 import server.core.share as share
 from server.core.database.clients import Client
-from server.core.payload.ping import *
+from server.core.payload.ping import Ping, Pong
 
 router = APIRouter()
 logger = logging.getLogger("router.ping")

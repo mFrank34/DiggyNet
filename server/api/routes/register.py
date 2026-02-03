@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 import server.core.share as share
 from server.core.database.clients import Client
-from server.core.payload.register import *
+from server.core.payload.register import Register, Response
 
 router = APIRouter()
 logger = logging.getLogger("router.register")

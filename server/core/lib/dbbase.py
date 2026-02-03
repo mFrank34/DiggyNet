@@ -22,6 +22,15 @@ class DBBase(ABC):
             where_column: str,
             where_value
     ):
+        """
+        Query row looks at the row of the table that's selected
+        :param conn:  connection to the database
+        :param table: table name to look at
+        :param select_column: column to look at
+        :param where_column: which column to look at
+        :param where_value: value to look at
+        :return: value of the table
+        """
         cur = conn.execute(
             f"SELECT {select_column} FROM {table} WHERE {where_column} = ?",
             (where_value,)
@@ -37,9 +46,19 @@ class DBBase(ABC):
             where_column: str,
             where_value,
     ):
+        """
+        Query row looks at the row of the table that's selected
+            :param conn: connection to the database
+            :param table: table name to look at
+            :param select_columns: columns to look at
+            :param where_column: which column to look at
+            :param where_value: value to look at
+            :return: value of the table
+        """
         cols = ", ".join(select_columns)
         cur = conn.execute(
             f"SELECT {cols} FROM {table} WHERE {where_column} = ?",
             (where_value,),
         )
+
         return cur.fetchone()

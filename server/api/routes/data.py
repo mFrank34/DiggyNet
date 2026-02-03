@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException
 
 import server.core.share as share
 from server.core.database.clients import Client
-from server.core.payload.data import *
+from server.core.payload.data import Data
 
 router = APIRouter()
 logger = logging.getLogger("router.data")
@@ -23,15 +23,10 @@ async def data(data: Data):
 
     # --- job update ---
 
-
-    # --- update location of the client ---
-
+    # --- update location of the client
 
     # --- update inventory ---
 
-
     # --- blocks vision ---
 
-
     # --- make a response to the client ---
-
