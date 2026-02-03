@@ -1,11 +1,10 @@
 # initialize.py
 
 import sqlite3
+
 import server.core.constants as constants
-
-
-from server.core.database.clients import Client
 from server.core.database.client_state import Client_State
+from server.core.database.clients import Client
 from server.core.database.jobs import Jobs
 from server.core.database.server import Server
 

@@ -1,16 +1,13 @@
 # startup.py
 
-import os
-import uuid
-import json
-
-from server.core.database.initialize import initialize
-from server.core.database.server import Server
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 import server.core.share as share
 from server.core.constants import SERVER_KEY_PATH
+from server.core.database.initialize import initialize
+from server.core.database.server import Server
 
 
 @asynccontextmanager

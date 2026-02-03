@@ -1,8 +1,9 @@
 # server.py
 
-from server.core.lib.dbbase import DBBase as db
-import sqlite3
 import secrets
+import sqlite3
+
+from server.core.lib.dbbase import DBBase as db
 
 
 class Server(db):

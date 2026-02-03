@@ -1,10 +1,11 @@
 # client.py
 
-from server.core.lib.dbbase import DBBase as db
-import sqlite3
 import secrets
+import sqlite3
 import time
 import uuid
+
+from server.core.lib.dbbase import DBBase as db
 
 
 class Client(db):
