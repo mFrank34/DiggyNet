@@ -18,7 +18,6 @@ SERVER_KEY = "4YoAEameV4W7ZuOOGihH_wBkm4rXufeRlxhhKZso4ls"
 # --- Client creds ---
 CLIENT_TYPE = "turtle"
 
-
 # --- SERVER HANDSHAKE ---
 def handshake() -> bool:
     try:

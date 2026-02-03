@@ -4,9 +4,9 @@ from typing import Dict, Optional
 
 
 class Data(BaseModel):
-    id: str
-    key: str
-    role: str
+    client_id: str
+    client_key: str
+    client_type: str
     job_id: str
     job_level: int
 
@@ -18,10 +18,12 @@ class Data(BaseModel):
             "z": 0,
         }
     )
+
     # inventory: slot -> item id (0–15)
     inventory: Dict[int, Optional[str]] = Field(
         default_factory=lambda: {i: None for i in range(16)}
     )
+
     # vision blocks
     vision: Dict[str, Optional[str]] = Field(
         default_factory=lambda: {
