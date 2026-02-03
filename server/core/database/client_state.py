@@ -17,7 +17,7 @@ class Client_State(db):
             client_id TEXT PRIMARY KEY,
             coords TEXT NOT NULL,
             job_id TEXT NOT NULL,
-            job_level INTEGER NOT NULL DEFAULT 0,
+            job_status INTEGER NOT NULL DEFAULT 0,
             inventory TEXT NOT NULL,
             fuel REAL NOT NULL,
             FOREIGN KEY (client_id) REFERENCES clients(id),
@@ -33,7 +33,7 @@ class Client_State(db):
             client_id: str,
             coords_data: Coords,
             job_id: str,
-            job_level: int,
+            job_status: int,
             inventory_data: Inventory,
             fuel: float
     ) -> None:
@@ -43,20 +43,20 @@ class Client_State(db):
         inventory_data: list of 16 strings or None
         """
         conn.execute(f"""
-            INSERT INTO {cls.table_name} (client_id, coords, job_id, job_level, inventory, fuel)
+            INSERT INTO {cls.table_name} (client_id, coords, job_id, job_status, inventory, fuel)
             VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(client_id) DO UPDATE SET
                 coords = excluded.coords,
                 job_id = excluded.job_id,
-                job_level = excluded.job_level,
+                job_status = excluded.job_status,
                 inventory = excluded.inventory,
                 fuel = excluded.fuel
         """, (
             client_id,
-            json.dumps(coords_data),
+            cls.to_json(coords_data),
             job_id,
-            job_level,
-            json.dumps(inventory_data),
+            job_status,
+            cls.to_json(inventory_data),
             fuel
         ))
         conn.commit()
@@ -72,12 +72,7 @@ class Client_State(db):
         )
         if not row:
             return None
-        coord_data = json.loads(row["coords"])
-        return Coords(
-            x=coord_data.get("x", 0),
-            y=coord_data.get("y", 0),
-            z=coord_data.get("z", 0)
-        )
+        return cls.from_json(Coords, row["coords"])
 
     @classmethod
     def get_jobs(cls, conn: sqlite3.Connection, client_id: str):
@@ -106,8 +101,8 @@ class Client_State(db):
         )
         if not row:
             return None
-        inv_data = json.loads(row["inventory"])
-        return Inventory(slots=inv_data)
+        inv_data = cls.from_json(Inventory, row["inventory"])
+        return inv_data
 
     @classmethod
     def get_fuel(cls, conn: sqlite3.Connection, client_id: str):

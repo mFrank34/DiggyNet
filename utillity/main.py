@@ -1,8 +1,11 @@
 import logging
+
 import httpx
 
-from server.core.payload.ping import *
-from server.core.payload.register import *
+from server.core.payload.data import ReturnData, Data
+from server.core.payload.ping import Ping, Pong
+from server.core.payload.register import Register, Response
+from server.core.payload.returns import Coords, Inventory, Vision
 
 # --- LOGGING SECTION ---
 logging.basicConfig(
@@ -13,10 +16,11 @@ logger = logging.getLogger("client.handshake")
 
 # --- CLIENT CONFIG ---
 SERVER_URL = "http://127.0.0.1:8000"
-SERVER_KEY = "4YoAEameV4W7ZuOOGihH_wBkm4rXufeRlxhhKZso4ls"
+SERVER_KEY = "lj9hzkqCaTn223s4Pts8viibic4-qN9AQs-CfjY7JT8"
 
 # --- Client creds ---
 CLIENT_TYPE = "turtle"
+
 
 # --- SERVER HANDSHAKE ---
 def handshake() -> bool:
@@ -72,6 +76,51 @@ def ping(server_url: str, client_id: str, client_key: str, client_type: str, fue
         return Pong(**data)
 
 
+# --- DATA PAYLOAD ---
+def data(
+        server_url: str,
+        client_id: str,
+        client_key: str,
+        client_type: str,
+        fuel: float
+) -> ReturnData:
+    """testing the server with data protocol"""
+    location = Coords(
+        x=1,
+        y=1,
+        z=1
+    )
+
+    items = Inventory(
+        slots=["coal", "CobbleStone", "something"]
+    )
+
+    eyes = Vision(
+        top="air",
+        middle="air",
+        bottom="air",
+    )
+
+    payload = Data(
+        client_id=client_id,
+        client_key=client_key,
+        client_type=client_type,
+        job_id="forward",
+        job_status=1,
+        fuel=fuel,
+        location=location,
+        slots=items,
+        visionData=eyes
+    )
+
+    # --- send payload to server to see how it reacts
+    with httpx.Client(timeout=5) as client:
+        response = client.post(f"{server_url}/data", json=payload.model_dump())
+        response.raise_for_status()
+        resp_json = response.json()
+        return ReturnData(**resp_json)
+
+
 if __name__ == "__main__":
     handshake = handshake()
     if handshake:
@@ -87,4 +136,11 @@ if __name__ == "__main__":
         logger.info(
             "Ping successful: Given Job = %s",
             client_response.job
+        )
+
+    if handshake:
+        client_response = data(SERVER_URL, CLIENT_ID, CLIENT_SECRET, CLIENT_TYPE, 100.0)
+        logger.info(
+            "Data successful: sent to server = %s",
+            client_response.response
         )

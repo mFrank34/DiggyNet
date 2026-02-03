@@ -30,7 +30,7 @@ async def data(data: Data):
         data.client_id,
         data.location,
         data.job_id,
-        data.job_level,
+        data.job_status,
         data.slots,
         data.fuel
     )

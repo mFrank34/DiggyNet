@@ -1,6 +1,7 @@
 # dbbase.py
 # little base class for creating sqlite3 tables
 
+import json
 import sqlite3
 from abc import ABC, abstractmethod
 
@@ -62,3 +63,25 @@ class DBBase(ABC):
         )
 
         return cur.fetchone()
+
+    @staticmethod
+    def to_json(obj):
+        # Pydantic v2
+        if hasattr(obj, "model_dump"):
+            obj = obj.model_dump()
+
+        # Dataclass
+        elif hasattr(obj, "__dataclass_fields__"):
+            from dataclasses import asdict
+            obj = asdict(obj)
+
+        # Custom class with attributes
+        elif hasattr(obj, "__dict__"):
+            obj = obj.__dict__
+
+        # Otherwise assume it's already JSON‑safe (dict, list, str, etc.)
+        return json.dumps(obj)
+
+    @staticmethod
+    def from_json(model_cls, value):
+        return model_cls(**json.loads(value))
